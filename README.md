@@ -8,3 +8,8 @@ Redis Go Client &amp; Cluster
     +OK
     127.0.0.1:6379>ping
     +PONG
+    127.0.0.1:6379>save
+    +PONG
+    127.0.0.1:6379>shutdown
+    +OK
+    127.0.0.1:6379>exit
