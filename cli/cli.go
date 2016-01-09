@@ -3,7 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"github.com/qqbuby/redigo/redis"
+	"github.com/qqbuby/redis-go/redis"
 	"os"
 	"strconv"
 	"strings"
