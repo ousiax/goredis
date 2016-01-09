@@ -1,42 +1,59 @@
-// A client sends to the Redis server a RESP Array consiting of just Bulk Strings.
-// A Redis server replies to clients sending any valid RESP data type as reply
-// For Simple Strings the first byte of the reply is "+"
-// For Errors the first byte of the reply is "-"
-// For Integers the first byte of the reply is ":"
-// For Bulk Strings the first byte of the reply is "$"
-// For Arrays the first byte of the reply is "*"
-package main
+package redis
 
 import (
 	"bufio"
-	"fmt"
 	"net"
-	"os"
-	"strings"
+	//"strconv"
 )
 
-func main() {
-	conn, err := net.Dial("tcp", "127.0.0.1:6379")
+type Commander interface {
+	Send(s string) (n int, err error)
+	Reply() (reply interface{}, err error)
+	Set(key, value []byte) (err error)
+	Get(key string) (value []byte)
+}
+
+type client struct {
+	Conn   net.Conn
+	Writer *bufio.Writer
+	Reader *bufio.Reader
+}
+
+func (c *client) Send(s string) (n int, err error) {
+	n, err = c.Writer.WriteString(s)
+	c.Writer.Flush()
+	return
+}
+
+func (c *client) Reply() (interface{}, error) {
+	line, err := c.Reader.ReadSlice('\n')
+
+	switch line[0] {
+	case '+', '-', ':', '$', '*':
+		// n, _ = string.Atoi(string(line[1 : len(line)-3]))
+		// for i := 0; i < n; i++ {
+		// }
+	}
+	return line, err
+
+}
+
+func (c *client) Set(key, value []byte) (err error) {
+	return nil
+}
+
+func (c *client) Get(key string) (value []byte) {
+	//line, _ := c.br.ReadSlice('\n')
+	return nil
+}
+
+func NewClient(network, address string) (cmd Commander, err error) {
+	conn, err := net.Dial(network, address)
 	if err != nil {
-		fmt.Println("net: could not connect to redis server.")
-		return
+		return nil, err
 	}
-	defer conn.Close()
-	r := bufio.NewReader(os.Stdin)
-	fmt.Println("press 'quit' to exit.")
-	for {
-		fmt.Print(">")
-		raw, _ := r.ReadString('\n')
-		raw = strings.Trim(raw, "\n ")
-		if strings.ToLower(raw) == "quit" {
-			break
-		}
-		a := strings.Split(raw, " ")
-		cmd := make([]byte, len(raw))
-		cmd = append(cmd, []byte(fmt.Sprintf("*%d\r\n", len(a)))...)
-		for _, s := range a {
-			cmd = append(cmd, []byte(fmt.Sprintf("$%d\r\n%s\r\n", len(s), s))...)
-		}
-		fmt.Println(string(cmd))
-	}
+	w := bufio.NewWriter(conn)
+	rd := bufio.NewReader(conn)
+	c := client{Conn: conn, Writer: w, Reader: rd}
+	return Commander(&c), nil
 }
