@@ -25,6 +25,9 @@ func main() {
 
 		raw, _ := reader.ReadString('\n')
 		raw = strings.Trim(raw, "\n ")
+		if len(raw) == 0 {
+			continue
+		}
 		if strings.ToLower(raw) == "quit" || strings.ToLower(raw) == "exit" {
 			break
 		}
@@ -36,9 +39,9 @@ func main() {
 		}
 		// fmt.Printf("%s\n") // for debug to output raw command bytes
 		client.Send(string(command))
-		rep, e := client.Reply()
+		resp, e := client.RawReply()
 		if e == nil {
-			fmt.Print(string(rep.([]byte)))
+			fmt.Print(string(resp))
 		}
 	}
 }
