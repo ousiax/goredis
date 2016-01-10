@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
 	"github.com/qqbuby/redis-go/redis"
 	"os"
@@ -10,14 +11,21 @@ import (
 )
 
 func main() {
-	const network = "tcp"
-	const address = "127.0.0.1:6379"
+	hostnamePtr := flag.String("h", "127.0.0.1", "Server hostname (default: 127.0.0.1).")
+	portPtr := flag.Int("p", 6379, "Server port (default: 6379).")
+	flag.Parse()
+
+	network := "tcp"
+	address := *hostnamePtr + ":" + strconv.Itoa(*portPtr)
 
 	client, err := redis.NewClient(network, address)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
+	defer func() {
+		client.Close()
+	}()
 
 	reader := bufio.NewReader(os.Stdin)
 	for {
@@ -39,7 +47,7 @@ func main() {
 		}
 		// fmt.Printf("%s\n") // for debug to output raw command bytes
 		client.Send(string(command))
-		resp, e := client.Reply()
+		resp, e := client.Receive()
 		if e == nil {
 			fmt.Printf("%v\n", resp)
 		} else {
