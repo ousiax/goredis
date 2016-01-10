@@ -20,3 +20,5 @@ Redis Go Client &amp; Cluster
     127.0.0.1:6379>save
     OK
     127.0.0.1:6379>quit
+
+***Note***: you can also type `./cli -p=<port> -h=<hostname>`.
