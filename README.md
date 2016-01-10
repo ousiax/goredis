@@ -8,23 +8,15 @@ Redis Go Client &amp; Cluster
     $ cd $GOPATH/bin
     $ ./cli 
     127.0.0.1:6379>ping
-    +PONG
+    PONG
     127.0.0.1:6379>set foo buzz
-    +OK
+    OK
     127.0.0.1:6379>get foo
-    $4
     buzz
     127.0.0.1:6379>lpush bar 0 1 2
-    :3
+    3
     127.0.0.1:6379>lrange bar 0 -1
-    *3
-    $1
-    2
-    $1
-    1
-    $1
-    0
+    [2 1 0]
     127.0.0.1:6379>save
-    +OK
-    127.0.0.1:6379>shutdown
+    OK
     127.0.0.1:6379>quit
