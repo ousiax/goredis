@@ -45,7 +45,7 @@ func main() {
 		for _, p := range s {
 			command = append(command, fmt.Sprintf("$%d\r\n%s\r\n", len(p), p)...)
 		}
-		// fmt.Printf("%s\n") // for debug to output raw command bytes
+		//fmt.Printf("%q\n", command) // for debug to output raw command bytes
 		client.Send(string(command))
 		resp, e := client.Receive()
 		if e == nil {
