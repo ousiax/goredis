@@ -39,9 +39,11 @@ func main() {
 		}
 		// fmt.Printf("%s\n") // for debug to output raw command bytes
 		client.Send(string(command))
-		resp, e := client.RawReply()
+		resp, e := client.Reply()
 		if e == nil {
-			fmt.Print(string(resp))
+			fmt.Printf("%v\n", resp)
+		} else {
+			fmt.Printf("%v\n", err.Error())
 		}
 	}
 }

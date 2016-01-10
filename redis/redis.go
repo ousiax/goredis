@@ -28,14 +28,6 @@ func (c *client) Send(s string) (n int, err error) {
 	return
 }
 
-func (c *client) reply() (symbl byte, response []byte, err error) {
-	line, err := c.Reader.ReadSlice('\n')
-	if err != nil {
-		return byte('\x00'), nil, err
-	}
-	return line[0], line[1 : len(line)-3], nil
-}
-
 func (c *client) RawReply() ([]byte, error) {
 	resp, err := c.Reader.ReadSlice('\n')
 	if err != nil {
@@ -60,13 +52,13 @@ func (c *client) RawReply() ([]byte, error) {
 	}
 	return resp, err
 }
-
 func (c *client) Reply() (interface{}, error) {
-	symbl, resp, err := c.reply()
+	line, err := c.Reader.ReadSlice('\n')
 	if err != nil {
 		return nil, err
 	}
-	switch symbl {
+	symbol, resp := line[0], line[1:len(line)-2] // trim first bit and CRLF
+	switch symbol {
 	case '+', '-':
 		return string(resp), nil
 	case ':':
@@ -76,7 +68,8 @@ func (c *client) Reply() (interface{}, error) {
 		if length == -1 {
 			return nil, nil
 		} else {
-			return c.Reply()
+			s, _ := c.Reader.ReadSlice('\n')
+			return string(s[0 : len(s)-2]), nil
 		}
 	case '*':
 		length, _ := strconv.Atoi(string(resp))
@@ -90,7 +83,7 @@ func (c *client) Reply() (interface{}, error) {
 		}
 		return reslt, nil
 	default:
-		panic(fmt.Sprintf("Protocol Error: %s, %s", string(symbl), string(resp)))
+		panic(fmt.Sprintf("Protocol Error: %s, %s", string(symbol), string(resp)))
 	}
 }
 
