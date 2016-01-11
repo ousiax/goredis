@@ -23,7 +23,7 @@ type respStrings interface {
 	// MSETNX key value [key value ...] Set multiple keys to multiple values, only if none of the keys exist
 	// PSETEX key milliseconds value Set the value and expiration in milliseconds of a key
 	// SET key value [EX seconds] [PX milliseconds] [NX|XX] Set the string value of a key
-	Set(key string, args ...interface{}) (string, error)
+	Set(key string, value interface{}, p ...interface{}) (string, error)
 	// SETBIT key offset value Sets or clears the bit at offset in the string value stored at key
 	// SETEX key seconds value Set the value and expiration of a key
 	// SETNX key value Set the value of a key, only if the key does not exist

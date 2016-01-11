@@ -105,7 +105,7 @@ func (c *client) writeHeader(symbol byte, n int64) error {
 	return err
 }
 
-// writeBytes write a []byte to buffer with RESP header($) and appends with CR&LF. e.g. $3\r\nSET\r\n
+// writeBytes writes a []byte to buffer with RESP header($) and appends with CR&LF. e.g. $3\r\nSET\r\n
 func (c *client) writeBytes(p []byte) error {
 	c.writeHeader('$', int64(len(p)))
 	c.bw.Write(p)
@@ -113,21 +113,51 @@ func (c *client) writeBytes(p []byte) error {
 	return err
 }
 
-// writeBytes write an integer to buffer with RESP header($) and and appends with CR&LF. e.g. $3\r\n125\r\n
+// writeInt writes an integer to buffer with RESP header($) and and appends with CR&LF. e.g. $3\r\n125\r\n
 func (c *client) writeInt(n int64) error {
 	p := strconv.AppendInt([]byte{}, n, 10)
 	return c.writeBytes(p)
 }
 
-// writeBytes write a float to buffer with a RESP header($) and and appends with CR&LF. e.g. $3\r\n1.5\r\n
+// writeFloat writes a float to buffer with a RESP header($) and and appends with CR&LF. e.g. $3\r\n1.5\r\n
 func (c *client) writeFloat(f float64) error {
 	p := strconv.AppendFloat([]byte{}, f, 'g', -1, 64)
 	return c.writeBytes(p)
 }
 
-// writeBytes write a string to buffer with RESP header($) and and appends with CR&LF. e.g. $4\r\nLLEN\r\n
+// writeString writes a string to buffer with RESP header($) and and appends with CR&LF. e.g. $4\r\nLLEN\r\n
 func (c *client) writeString(s string) error {
 	err := c.writeBytes([]byte(s))
+	return err
+}
+
+// writeInterface parses parameter 'p' and writes a it to buffer with RESP header($) and and appends with CR&LF. e.g. $4\r\nLLEN\r\n
+func (c *client) writeInterface(p interface{}) (err error) {
+
+	switch p.(type) {
+	case string:
+		err = c.writeString(p.(string))
+	case []byte:
+		err = c.writeBytes(p.([]byte))
+	case int:
+		err = c.writeInt(int64(p.(int)))
+	case float32:
+		err = c.writeFloat(float64(p.(float32)))
+	case float64:
+		err = c.writeFloat(p.(float64))
+	case bool:
+		if p.(bool) {
+			err = c.writeString("1")
+		} else {
+			err = c.writeString("0")
+		}
+	case nil:
+		err = c.writeString("")
+	default:
+		var buf bytes.Buffer
+		fmt.Fprint(&buf, p)
+		err = c.writeBytes(buf.Bytes())
+	}
 	return err
 }
 
@@ -141,30 +171,7 @@ func (c *client) executeCommand(commandName string, args ...interface{}) (reply 
 		if err != nil {
 			break
 		}
-		switch arg.(type) {
-		case string:
-			err = c.writeString(arg.(string))
-		case []byte:
-			err = c.writeBytes(arg.([]byte))
-		case int:
-			err = c.writeInt(int64(arg.(int)))
-		case float32:
-			err = c.writeFloat(float64(arg.(float32)))
-		case float64:
-			err = c.writeFloat(arg.(float64))
-		case bool:
-			if arg.(bool) {
-				err = c.writeString("1")
-			} else {
-				err = c.writeString("0")
-			}
-		case nil:
-			err = c.writeString("")
-		default:
-			var buf bytes.Buffer
-			fmt.Fprint(&buf, arg)
-			err = c.writeBytes(buf.Bytes())
-		}
+		err = c.writeInterface(arg)
 	}
 	err = c.bw.Flush()
 	if err == nil {
@@ -177,7 +184,13 @@ func (c *client) Get(key string) (value interface{}, err error) {
 	return c.executeCommand("GET", key)
 }
 
-func (c *client) Set(key string, args ...interface{}) (string, error) {
+func (c *client) Set(key string, value interface{}, p ...interface{}) (string, error) {
+	args := make([]interface{}, 2+len(p))
+	args[0] = key
+	args[1] = value
+	for i := 0; i < len(p); i++ {
+		args[i+2] = p[i]
+	}
 	s, e := c.executeCommand("SET", args...)
 	if e != nil {
 		return "", e
