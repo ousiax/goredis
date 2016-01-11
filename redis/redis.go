@@ -6,14 +6,13 @@ import (
 	"fmt"
 	"net"
 	"strconv"
-	"strings"
 )
 
 type Client interface {
-	RESPStrings
-	Send(s string) (n int, err error)
-	Receive() (resp interface{}, err error)
-	RawReceive() (resp []byte, err error)
+	respStrings
+	Send(s string) (reply interface{}, err error)
+	//Receive() (resp interface{}, err error)
+	//RawReceive() (resp []byte, err error)
 	Close() (err error)
 }
 
@@ -23,13 +22,13 @@ type client struct {
 	br   *bufio.Reader
 }
 
-func (c *client) Send(s string) (n int, err error) {
-	n, err = c.bw.WriteString(s)
+func (c *client) Send(s string) (reply interface{}, err error) {
+	c.bw.WriteString(s)
 	c.bw.Flush()
-	return
+	return c.receive()
 }
 
-func (c *client) Receive() (interface{}, error) {
+func (c *client) receive() (interface{}, error) {
 	line, err := c.br.ReadSlice('\n')
 	if err != nil {
 		return nil, err
@@ -55,7 +54,7 @@ func (c *client) Receive() (interface{}, error) {
 		}
 		reslt := make([]interface{}, 0)
 		for i := 0; i < length; i++ {
-			rep, _ := c.Receive()
+			rep, _ := c.receive()
 			reslt = append(reslt, rep)
 		}
 		return reslt, nil
@@ -64,30 +63,30 @@ func (c *client) Receive() (interface{}, error) {
 	}
 }
 
-func (c *client) RawReceive() ([]byte, error) {
-	resp, err := c.br.ReadSlice('\n')
-	if err != nil {
-		return resp, err
-	}
-	symbol := resp[0] // +,-,:,$,*
-	switch symbol {
-	case '+', '-', ':':
-		break
-	case '$':
-		line, _ := c.br.ReadSlice('\n')
-		resp = append(resp, line...)
-	case '*':
-		d := strings.Trim(string(resp), "*\r\n")
-		length, _ := strconv.Atoi(d)
-		for i := 0; i < length; i++ {
-			line, _ := c.RawReceive()
-			resp = append(resp, line...)
-		}
-	default:
-		panic(fmt.Sprintf("Protocol Error: %s, %s", string(symbol), string(resp)))
-	}
-	return resp, err
-}
+// func (c *client) RawReceive() ([]byte, error) {
+// 	resp, err := c.br.ReadSlice('\n')
+// 	if err != nil {
+// 		return resp, err
+// 	}
+// 	symbol := resp[0] // +,-,:,$,*
+// 	switch symbol {
+// 	case '+', '-', ':':
+// 		break
+// 	case '$':
+// 		line, _ := c.br.ReadSlice('\n')
+// 		resp = append(resp, line...)
+// 	case '*':
+// 		d := strings.Trim(string(resp), "*\r\n")
+// 		length, _ := strconv.Atoi(d)
+// 		for i := 0; i < length; i++ {
+// 			line, _ := c.RawReceive()
+// 			resp = append(resp, line...)
+// 		}
+// 	default:
+// 		panic(fmt.Sprintf("Protocol Error: %s, %s", string(symbol), string(resp)))
+// 	}
+// 	return resp, err
+// }
 
 func (c *client) Close() (err error) {
 	return c.conn.Close()
@@ -132,10 +131,10 @@ func (c *client) writeString(s string) error {
 	return c.writeBytes([]byte(s))
 }
 
-func (c *client) executeCommand(commandName string, args ...interface{}) error {
-	err := c.writeHeader('*', int64(1+len(args)))
+func (c *client) executeCommand(commandName string, args ...interface{}) (reply interface{}, err error) {
+	err = c.writeHeader('*', int64(1+len(args)))
 	if err != nil {
-		return nil
+		return nil, err
 	}
 	err = c.writeString(commandName)
 	for _, arg := range args {
@@ -167,15 +166,33 @@ func (c *client) executeCommand(commandName string, args ...interface{}) error {
 			err = c.writeBytes(buf.Bytes())
 		}
 	}
-	return err
+	if err == nil {
+		err = c.bw.Flush()
+	}
+	if err == nil {
+		return c.receive()
+	}
+	return nil, err
 }
 
 func (c *client) Get(key string) (value interface{}, err error) {
-	err = c.executeCommand("GET", key)
-	if err == nil {
-		return c.Receive()
+	return c.executeCommand("GET", key)
+}
+
+func (c *client) Set(key string, args ...interface{}) (string, error) {
+	s, e := c.executeCommand("SET", args...)
+	if e != nil {
+		return "", e
 	}
-	return nil, err
+	switch s.(type) {
+	case nil:
+		return "", nil
+	case string:
+		v := s.(string)
+		return v, nil
+	default:
+		panic("Set do not work properly with an unexpected value.")
+	}
 }
 
 func NewClient(network, address string) (Client, error) {
