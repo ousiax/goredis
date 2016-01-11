@@ -46,8 +46,7 @@ func main() {
 			command = append(command, fmt.Sprintf("$%d\r\n%s\r\n", len(p), p)...)
 		}
 		//fmt.Printf("%q\n", command) // for debug to output raw command bytes
-		client.Send(string(command))
-		resp, e := client.Receive()
+		resp, e := client.Send(string(command))
 		if e == nil {
 			fmt.Printf("%v\n", resp)
 		} else {
