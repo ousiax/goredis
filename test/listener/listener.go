@@ -30,6 +30,10 @@ func main() {
 				log.Fatal(err)
 			}
 			go func(c net.Conn) {
+				defer func() {
+					c.Close()
+					recover()
+				}()
 				rd := bufio.NewReader(c)
 				for {
 					if s, err := rd.ReadString('\n'); err == nil {
@@ -43,7 +47,6 @@ func main() {
 						}
 					}
 				}
-				c.Close()
 			}(conn)
 		}
 	}()

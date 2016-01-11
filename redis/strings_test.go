@@ -1,12 +1,13 @@
-package redis
+package redis_test
 
 import (
-	"fmt"
+	"github.com/qqbuby/redis-go/redis"
 	"testing"
 )
 
 const (
 	network = "tcp"
+	// address = "127.0.0.1:6379"
 	address = "192.168.1.130:6379"
 )
 
@@ -16,7 +17,7 @@ const (
 )
 
 func TestSet(t *testing.T) {
-	client, err := NewClient(network, address)
+	client, err := redis.NewClient(network, address)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -27,23 +28,25 @@ func TestSet(t *testing.T) {
 		t.Errorf("Set dit not work properly: %s", e.Error())
 	}
 	if s != "OK" {
-		t.Error("Set dit not work properly")
+		t.Errorf("Set dit not work properly. [%s]", s)
 	}
 }
 
 func TestGet(t *testing.T) {
-	client, err := NewClient(network, address)
+	client, err := redis.NewClient(network, address)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer client.Close()
-
-	stat, _ := client.Send(fmt.Sprintf("*3\r\n$3\r\nset\r\n$%d\r\n%s\r\n$%d\r\n%s\r\n", len(testKey), testKey, len(testValue), testValue))
+	args := make([]interface{}, 2)
+	args[0] = testKey
+	args[1] = testValue
+	stat, _ := client.Send("SET", args...)
 	if stat != "OK" {
 		t.Fatalf("redis.TestGet: result: %s, expected: %s.", stat, "OK")
 	}
-	v, _ := client.Get("testKey")
-	if v != "testValue" {
-		t.Fatalf("redis.TestGet: result: %s, expected: %s.", v, testValue)
+	v, _ := client.Get(testKey)
+	if v != testValue {
+		t.Fatalf("redis.TestGet: result: [%s], expected: %s.", v, testValue)
 	}
 }

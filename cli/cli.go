@@ -40,13 +40,18 @@ func main() {
 			break
 		}
 		s := strings.Split(raw, " ")
-		command := make([]byte, 0) // if the cap > 0, slice always insert a \x00, why?
-		command = append(command, fmt.Sprintf("*%s\r\n", strconv.Itoa(len(s)))...)
-		for _, p := range s {
-			command = append(command, fmt.Sprintf("$%d\r\n%s\r\n", len(p), p)...)
+		// command := make([]byte, 0) // if the cap > 0, slice always insert a \x00, why?
+		// command = append(command, fmt.Sprintf("*%s\r\n", strconv.Itoa(len(s)))...)
+		// for _, p := range s {
+		// 	command = append(command, fmt.Sprintf("$%d\r\n%s\r\n", len(p), p)...)
+		// }
+		// //fmt.Printf("%q\n", command) // for debug to output raw command bytes
+		// resp, e := client.Send(string(command))
+		args := make([]interface{}, len(s[1:]))
+		for i := 0; i < len(args); i++ {
+			args[i] = s[1+i]
 		}
-		//fmt.Printf("%q\n", command) // for debug to output raw command bytes
-		resp, e := client.Send(string(command))
+		resp, e := client.Send(s[0], args...)
 		if e == nil {
 			fmt.Printf("%v\n", resp)
 		} else {

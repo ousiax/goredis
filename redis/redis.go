@@ -10,7 +10,7 @@ import (
 
 type Client interface {
 	respStrings
-	Send(s string) (reply interface{}, err error)
+	Send(commandName string, args ...interface{}) (reply interface{}, err error)
 	//Receive() (resp interface{}, err error)
 	//RawReceive() (resp []byte, err error)
 	Close() (err error)
@@ -22,10 +22,8 @@ type client struct {
 	br   *bufio.Reader
 }
 
-func (c *client) Send(s string) (reply interface{}, err error) {
-	c.bw.WriteString(s)
-	c.bw.Flush()
-	return c.receive()
+func (c *client) Send(commandName string, args ...interface{}) (reply interface{}, err error) {
+	return c.executeCommand(commandName, args...)
 }
 
 func (c *client) receive() (interface{}, error) {
@@ -92,43 +90,45 @@ func (c *client) Close() (err error) {
 	return c.conn.Close()
 }
 
-func (c *client) writeBytes(p []byte) error {
-	err := c.writeHeader('$', int64(len(p)))
-	if err != nil {
-		return err
-	}
-	_, err = c.bw.Write(p)
-	if err == nil {
-		_, err = c.bw.Write([]byte{'\r', '\n'})
-	}
+func (c *client) writeCRLF() error {
+	_, err := c.bw.Write([]byte{'\r', '\n'})
 	return err
 }
 
-//  2\r\n
-func (c *client) writeInt(n int64) error {
-	var p []byte
-	p = strconv.AppendInt(p, n, 10)
-	return c.writeBytes(p)
-}
-
-func (c *client) writeFloat(f float64) error {
-	var p []byte
-	p = strconv.AppendFloat(p, f, 'g', -1, 64)
-	return c.writeBytes(p)
-}
-
-//  *2\r\n
+// writeBytes write an RESP head header(*$) to buffer and appends with CR&LF. e.g. $3\r\n, *3\r\n
 func (c *client) writeHeader(symbol byte, n int64) error {
-	err := c.bw.WriteByte(symbol)
-	if err == nil {
-		err = c.writeInt(n)
-	}
+	c.bw.WriteByte(symbol)
+	// err = c.writeInt(n) // bugged, recursive calling.
+	p := strconv.AppendInt([]byte{}, n, 10)
+	c.bw.Write(p)
+	err := c.writeCRLF()
 	return err
 }
 
-//  LLEN\r\n
+// writeBytes write a []byte to buffer with RESP header($) and appends with CR&LF. e.g. $3\r\nSET\r\n
+func (c *client) writeBytes(p []byte) error {
+	c.writeHeader('$', int64(len(p)))
+	c.bw.Write(p)
+	err := c.writeCRLF()
+	return err
+}
+
+// writeBytes write an integer to buffer with RESP header($) and and appends with CR&LF. e.g. $3\r\n125\r\n
+func (c *client) writeInt(n int64) error {
+	p := strconv.AppendInt([]byte{}, n, 10)
+	return c.writeBytes(p)
+}
+
+// writeBytes write a float to buffer with a RESP header($) and and appends with CR&LF. e.g. $3\r\n1.5\r\n
+func (c *client) writeFloat(f float64) error {
+	p := strconv.AppendFloat([]byte{}, f, 'g', -1, 64)
+	return c.writeBytes(p)
+}
+
+// writeBytes write a string to buffer with RESP header($) and and appends with CR&LF. e.g. $4\r\nLLEN\r\n
 func (c *client) writeString(s string) error {
-	return c.writeBytes([]byte(s))
+	err := c.writeBytes([]byte(s))
+	return err
 }
 
 func (c *client) executeCommand(commandName string, args ...interface{}) (reply interface{}, err error) {
@@ -166,9 +166,7 @@ func (c *client) executeCommand(commandName string, args ...interface{}) (reply 
 			err = c.writeBytes(buf.Bytes())
 		}
 	}
-	if err == nil {
-		err = c.bw.Flush()
-	}
+	err = c.bw.Flush()
 	if err == nil {
 		return c.receive()
 	}
