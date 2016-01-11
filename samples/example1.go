@@ -21,6 +21,7 @@ func main() {
 		return
 	}
 	defer client.Close()
+
 	var key string = "key"
 	client.Set(key, "hello world")
 	v, _ := client.Get(key)
