@@ -14,7 +14,14 @@ import (
 )
 
 type Client interface {
+	respCluster
+	respConnection
+	// respKeys
+	respServer
 	respStringer
+	respTransaction
+	respPubSub
+	respHyperLogLog
 	Send(commandName string, args ...interface{}) (reply interface{}, err error)
 	Close() (err error)
 }
@@ -210,16 +217,81 @@ func parseStringEx(p interface{}) (interface{}, error) {
 	case string:
 		return v, nil
 	default:
-		return nil, strconv.ErrRange
+		return nil, errors.New(fmt.Sprintf("redis.parseStringEx: interface conversion, interface is %T, not string", p))
 	}
 }
 
 // parseString returns a string if p is a string type, otherwise a empty string.
 // usually, the p is a string or a nil (i.e. a zero value).
-func parseString(p interface{}) string {
-	s, _ := p.(string)
-	return s
+func parseString(p interface{}) (string, error) {
+	rsp, err := parseStringEx(p)
+	s := rsp.(string)
+	return s, err
 }
+
+// [BEGIN] RESP CONNECTION
+
+// AUTH password
+// Authenticate to the server
+// Simple string reply
+func (c *client) Auth(password string) (string, error) {
+	rsp, err := c.executeCommand("AUTH", password)
+	if err != nil {
+		return "", err
+	}
+	v, e := parseString(rsp)
+	return v, e
+}
+
+// ECHO message
+// Echo the given string
+// Simple string reply
+func (c *client) Echo(message string) (string, error) {
+	rsp, err := c.executeCommand("ECHO", message)
+	if err != nil {
+		return "", err
+	}
+	v, e := parseString(rsp)
+	return v, e
+}
+
+// PING
+// Ping the server
+// Simple string reply
+func (c *client) Ping() (string, error) {
+	rsp, err := c.executeCommand("PING")
+	if err != nil {
+		return "", err
+	}
+	v, e := parseString(rsp)
+	return v, e
+}
+
+// QUIT
+// Close the connection
+// Simple string reply: always OK.
+func (c *client) Quit() (string, error) {
+	rsp, err := c.executeCommand("QUIT")
+	if err != nil {
+		return "", err
+	}
+	v, e := parseString(rsp)
+	return v, e
+}
+
+// SELECT index
+// Change the selected database for the current connection
+// Simple string reply
+func (c *client) Select(index int) (string, error) {
+	rsp, err := c.executeCommand("SELECT", index)
+	if err != nil {
+		return "", err
+	}
+	v, e := parseString(rsp)
+	return v, e
+}
+
+// [END] RESP CONNECTION
 
 // [BEGIN] RESP Strings
 
@@ -338,8 +410,11 @@ func (c *client) GetRange(key interface{}, start, end int) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	v := parseString(rsp)
-	return v, nil
+	if err != nil {
+		return "", err
+	}
+	v, e := parseString(rsp)
+	return v, e
 }
 
 // GETSET key value
@@ -420,8 +495,8 @@ func (c *client) MSet(key, value interface{}, p ...interface{}) (string, error) 
 	if err != nil {
 		return "", err
 	}
-	v := parseString(rsp)
-	return v, nil
+	v, e := parseString(rsp)
+	return v, e
 }
 
 // MSETNX key value [key value ...]
@@ -452,8 +527,11 @@ func (c *client) PSetEx(key interface{}, milliseconds int, value interface{}) (s
 	if err != nil {
 		return "", err
 	}
-	v := parseString(rsp)
-	return v, nil
+	if err != nil {
+		return "", err
+	}
+	v, e := parseString(rsp)
+	return v, e
 }
 
 // SET key value [EX seconds] [PX milliseconds] [NX|XX]
@@ -471,8 +549,8 @@ func (c *client) Set(key, value interface{}, p ...interface{}) (string, error) {
 	if e != nil {
 		return "", e
 	}
-	v := parseString(rsp)
-	return v, nil
+	v, e := parseString(rsp)
+	return v, e
 }
 
 // SETBIT key offset value
@@ -495,8 +573,11 @@ func (c *client) SetEx(key interface{}, seconds int, value interface{}) (string,
 	if err != nil {
 		return "", err
 	}
-	v := parseString(rsp)
-	return v, nil
+	if err != nil {
+		return "", err
+	}
+	v, e := parseString(rsp)
+	return v, e
 }
 
 // SETNX key value
