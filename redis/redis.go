@@ -34,6 +34,17 @@ func (c *client) Send(commandName string, args ...interface{}) (reply interface{
 	return c.executeCommand(commandName, args...)
 }
 
+// receive returns the raw result without the symbols(+-:$*) and CR&LF.
+// One-dimensional byte slice, []byte:
+//    For Simple Strings the first byte of the reply is "+"
+//    For Errors the first byte of the reply is "-"
+//    For Integers the first byte of the reply is ":"
+//    For Bulk Strings the first byte of the reply is "$"
+// Two-dimensional byte slice, [][]byte:
+//    For Arrays the first byte of the reply is "*"
+// nil :
+//    For Null Bulk String
+//    For Null Array
 func (c *client) receive() (interface{}, error) {
 	line, err := c.br.ReadSlice('\n')
 	if err != nil {
@@ -41,17 +52,15 @@ func (c *client) receive() (interface{}, error) {
 	}
 	symbol, resp := line[0], line[1:len(line)-2] // trim first bit and CRLF
 	switch symbol {
-	case '+', '-':
-		return string(resp), nil
-	case ':':
-		return strconv.Atoi(string(resp))
+	case '+', '-', ':':
+		return resp, nil
 	case '$':
 		length, _ := strconv.Atoi(string(resp))
 		if length == -1 {
 			return nil, nil
 		} else {
 			s, _ := c.br.ReadSlice('\n')
-			return string(s[0 : len(s)-2]), nil
+			return s[0 : len(s)-2], nil
 		}
 	case '*':
 		length, _ := strconv.Atoi(string(resp))
@@ -170,8 +179,12 @@ func NewClient(network, address string) (Client, error) {
 	return Client(&cli), nil
 }
 
-// APPEND key value Append a value to a key
-func (c *client) Append(key, value string) (int, error) {
+// [BEGIN] RESP Strings
+
+// APPEND key value
+// Append a value to a key
+// Integer reply: the length of the string after the append operation.
+func (c *client) Append(key, value interface{}) (int, error) {
 	resp, err := c.executeCommand("APPEND", key, value)
 	if err != nil {
 		return -1, err
@@ -180,8 +193,10 @@ func (c *client) Append(key, value string) (int, error) {
 	return v, nil
 }
 
-// BITCOUNT key [start end] Count set bits in a string
-func (c *client) BitCount(key string, p ...int) (int, error) {
+// BITCOUNT key [start end]
+// Count set bits in a string
+// Integer reply: The number of bits set to 1.
+func (c *client) BitCount(key interface{}, p ...int) (int, error) {
 	args := make([]interface{}, 1+len(p))
 	args[0] = key
 	resp, err := c.executeCommand("BITCOUNT", args...)
@@ -192,8 +207,11 @@ func (c *client) BitCount(key string, p ...int) (int, error) {
 	return v, nil
 }
 
-// BITOP operation destkey key [key ...] Perform bitwise operations between strings
-func (c *client) BitOp(operation, destkey, key string, keys ...string) (int, error) {
+// BITOP operation destkey key [key ...]
+// Perform bitwise operations between strings
+// The BITOP command supports four bitwise operations: AND, OR, XOR and NOT.
+// Integer reply: The size of the string stored in the destination key, that is equal to the size of the longest input string.
+func (c *client) BitOp(operation, destkey, key interface{}, keys ...interface{}) (int, error) {
 	args := make([]interface{}, 3+len(keys))
 	args[0] = operation
 	args[1] = destkey
@@ -208,8 +226,10 @@ func (c *client) BitOp(operation, destkey, key string, keys ...string) (int, err
 	return resp.(int), err
 }
 
-// BITPOS key bit [start] [end] Find first bit set or clear in a string
-func (c *client) BitPOs(key string, bit int, p ...int) (int, error) {
+// BITPOS key bit [start] [end]
+// Find first bit set or clear in a string
+// Integer reply: The command returns the position of the first bit set to 1 or 0 according to the request.
+func (c *client) BitPOs(key interface{}, bit int, p ...int) (int, error) {
 	args := make([]interface{}, 2+len(p))
 	args[0] = key
 	args[1] = bit
@@ -223,13 +243,17 @@ func (c *client) BitPOs(key string, bit int, p ...int) (int, error) {
 	return resp.(int), err
 }
 
-// DECR key Decrement the integer value of a key by one
-func (c *client) Decr(key string) (int, error) {
+// DECR key
+// Decrement the integer value of a key by one
+// Integer reply: the value of key after the decrement
+func (c *client) Decr(key interface{}) (int, error) {
 	return c.DecrBy(key, 1)
 }
 
-// DECRBY key decrement Decrement the integer value of a key by the given number
-func (c *client) DecrBy(key string, decrement int) (int, error) {
+// DECRBY key decrement
+// Decrement the integer value of a key by the given number
+// Integer reply: the value of key after the decrement
+func (c *client) DecrBy(key interface{}, decrement int) (int, error) {
 	resp, err := c.executeCommand("DECRBY", key, decrement)
 	if err != nil {
 		return -1, err
@@ -238,8 +262,10 @@ func (c *client) DecrBy(key string, decrement int) (int, error) {
 	return v, nil
 }
 
-// GET key Get the value of a key
-func (c *client) Get(key string) (value string, err error) {
+// GET key
+// Get the value of a key
+// Bulk string reply: the value of key, or nil when key does not exist.
+func (c *client) Get(key interface{}) (value interface{}, err error) {
 	resp, err := c.executeCommand("GET", key)
 	if err != nil {
 		return "", err
@@ -248,8 +274,10 @@ func (c *client) Get(key string) (value string, err error) {
 	return v, nil
 }
 
-// GETBIT key offset Returns the bit value at offset in the string value stored at key
-func (c *client) GetBit(key string, offset int) (int, error) {
+// GETBIT key offset
+// Returns the bit value at offset in the string value stored at key
+// Integer reply: the bit value stored at offset.
+func (c *client) GetBit(key interface{}, offset int) (int, error) {
 	resp, err := c.executeCommand("GETBIT", key, offset)
 	if err != nil {
 		return -1, err
@@ -258,8 +286,10 @@ func (c *client) GetBit(key string, offset int) (int, error) {
 	return v, nil
 }
 
-// GETRANGE key start end Get a substring of the string stored at a key
-func (c *client) GetRange(key string, start, end int) (string, error) {
+// GETRANGE key start end
+// Get a substring of the string stored at a key
+// Bulk string reply: the substring of the string stored
+func (c *client) GetRange(key interface{}, start, end int) (interface{}, error) {
 	resp, err := c.executeCommand("GETRANGE", key, start, end)
 	if err != nil {
 		return "", err
@@ -268,8 +298,10 @@ func (c *client) GetRange(key string, start, end int) (string, error) {
 	return v, nil
 }
 
-// GETSET key value Set the string value of a key and return its old value
-func (c *client) GetSet(key, value string) (string, error) {
+// GETSET key value
+// Set the string value of a key and return its old value
+// Bulk string reply: the old value stored at key, or nil when key did not exist.
+func (c *client) GetSet(key, value interface{}) (interface{}, error) {
 	resp, err := c.executeCommand("GETSET", key, value)
 	if err != nil {
 		return "", err
@@ -278,13 +310,17 @@ func (c *client) GetSet(key, value string) (string, error) {
 	return v, nil
 }
 
-// INCR key Increment the integer value of a key by one
-func (c *client) Incr(key string) (int, error) {
+// INCR key
+// Increment the integer value of a key by one
+// Integer reply: the value of key after the increment
+func (c *client) Incr(key interface{}) (int, error) {
 	return c.IncrBy(key, 1)
 }
 
-// INCRBY key increment Increment the integer value of a key by the given amount
-func (c *client) IncrBy(key string, decrement int) (int, error) {
+// INCRBY key increment
+// Increment the integer value of a key by the given amount
+// Integer reply: the value of key after the increment
+func (c *client) IncrBy(key interface{}, decrement int) (int, error) {
 	resp, err := c.executeCommand("INCRBY", key, decrement)
 	if err != nil {
 		return -1, err
@@ -293,8 +329,10 @@ func (c *client) IncrBy(key string, decrement int) (int, error) {
 	return v, nil
 }
 
-// INCRBYFLOAT key increment Increment the float value of a key by the given amount
-func (c *client) IncrByFloat(key string, decrement float64) (float64, error) {
+// INCRBYFLOAT key increment
+// Increment the float value of a key by the given amount
+// Bulk string reply: the value of key after the increment.
+func (c *client) IncrByFloat(key interface{}, decrement float64) (float64, error) {
 	resp, err := c.executeCommand("INCRBYFLOAT", key, decrement)
 	if err != nil {
 		return -1.0, err
@@ -306,8 +344,10 @@ func (c *client) IncrByFloat(key string, decrement float64) (float64, error) {
 	return v, nil
 }
 
-// MGET key [key ...] Get the values of all the given keys
-func (c *client) MGet(key string, keys ...string) ([]interface{}, error) {
+// MGET key [key ...]
+// Get the values of all the given keys
+// Array reply: list of values at the specified keys.
+func (c *client) MGet(key interface{}, keys ...interface{}) ([]interface{}, error) {
 	// args := make([]interface{}, 1+len(keys))
 	// args[0] = key
 	// for i := 0; i < len(keys); i++ {
@@ -317,8 +357,10 @@ func (c *client) MGet(key string, keys ...string) ([]interface{}, error) {
 	return nil, nil
 }
 
-// MSET key value [key value ...] Set multiple keys to multiple values
-func (c *client) MSet(key, value string, p ...string) (string, error) {
+// MSET key value [key value ...]
+// Set multiple keys to multiple values
+// Simple string reply: always OK since MSET can't fail.
+func (c *client) MSet(key, value interface{}, p ...interface{}) (string, error) {
 	args := make([]interface{}, 2+len(p))
 	args[0] = key
 	args[1] = value
@@ -332,8 +374,12 @@ func (c *client) MSet(key, value string, p ...string) (string, error) {
 	return resp.(string), nil
 }
 
-// MSETNX key value [key value ...] Set multiple keys to multiple values, only if none of the keys exist
-func (c *client) MSetNx(key, value string, p ...string) (string, error) {
+// MSETNX key value [key value ...]
+// Set multiple keys to multiple values, only if none of the keys exist
+// Integer reply, specifically:
+//    1 if the all the keys were set.
+//    0 if no key was set (at least one key already existed).
+func (c *client) MSetNx(key, value interface{}, p ...interface{}) (int, error) {
 	args := make([]interface{}, 2+len(p))
 	args[0] = key
 	args[1] = value
@@ -342,13 +388,15 @@ func (c *client) MSetNx(key, value string, p ...string) (string, error) {
 	}
 	resp, err := c.executeCommand("MSETNX", args...)
 	if err != nil {
-		return "", err
+		return 0, err
 	}
-	return resp.(string), nil
+	return resp.(int), nil
 }
 
-// PSETEX key milliseconds value Set the value and expiration in milliseconds of a key
-func (c *client) PSetEx(key string, milliseconds int, value string) (string, error) {
+// PSETEX key milliseconds value
+// Set the value and expiration in milliseconds of a key
+// Simple string reply
+func (c *client) PSetEx(key interface{}, milliseconds int, value interface{}) (string, error) {
 	resp, err := c.executeCommand("PSETEX", key, milliseconds, value)
 	if err != nil {
 		return "", err
@@ -357,8 +405,11 @@ func (c *client) PSetEx(key string, milliseconds int, value string) (string, err
 	return v, nil
 }
 
-// SET key value [EX seconds] [PX milliseconds] [NX|XX] Set the string value of a key
-func (c *client) Set(key, value string, p ...interface{}) (string, error) {
+// SET key value [EX seconds] [PX milliseconds] [NX|XX]
+// Set the string value of a key
+// Simple string reply: OK if SET was executed correctly.
+// Null reply: a Null Bulk Reply is returned if the SET operation was not performed because the user specified the NX or XX option but the condition was not met.
+func (c *client) Set(key, value interface{}, p ...interface{}) (string, error) {
 	args := make([]interface{}, 2+len(p))
 	args[0] = key
 	args[1] = value
@@ -380,8 +431,10 @@ func (c *client) Set(key, value string, p ...interface{}) (string, error) {
 	}
 }
 
-// SETBIT key offset value Sets or clears the bit at offset in the string value stored at key
-func (c *client) SetBit(key string, offset, value int) (int, error) {
+// SETBIT key offset value
+// Sets or clears the bit at offset in the string value stored at key
+// Integer reply: the original bit value stored at offset.
+func (c *client) SetBit(key interface{}, offset, value int) (int, error) {
 	resp, err := c.executeCommand("SETBIT", key, offset, value)
 	if err != nil {
 		return -1, err
@@ -390,8 +443,10 @@ func (c *client) SetBit(key string, offset, value int) (int, error) {
 	return v, nil
 }
 
-// SETEX key seconds value Set the value and expiration of a key
-func (c *client) SetEx(key string, seconds int, value string) (string, error) {
+// SETEX key seconds value
+// Set the value and expiration of a key
+// Simple string reply
+func (c *client) SetEx(key interface{}, seconds int, value interface{}) (string, error) {
 	resp, err := c.executeCommand("SETEX", key, seconds, value)
 	if err != nil {
 		return "", err
@@ -400,8 +455,12 @@ func (c *client) SetEx(key string, seconds int, value string) (string, error) {
 	return v, nil
 }
 
-// SETNX key value Set the value of a key, only if the key does not exist
-func (c *client) SetNx(key, value string) (int, error) {
+// SETNX key value
+// Set the value of a key, only if the key does not exist
+// Integer reply, specifically:
+//    1 if the key was set
+//    0 if the key was not set
+func (c *client) SetNx(key, value interface{}) (int, error) {
 	resp, err := c.executeCommand("SETNX", key, value)
 	if err != nil {
 		return 0, err
@@ -410,8 +469,10 @@ func (c *client) SetNx(key, value string) (int, error) {
 	return v, nil
 }
 
-// SETRANGE key offset value Overwrite part of a string at key starting at the specified offset
-func (c *client) SetRange(key string, offset, value int) (int, error) {
+// SETRANGE key offset value
+// Overwrite part of a string at key starting at the specified offset
+// Integer reply: the length of the string after it was modified by the command.
+func (c *client) SetRange(key interface{}, offset, value int) (int, error) {
 	resp, err := c.executeCommand("SETRANGE", key, offset, value)
 	if err != nil {
 		return 0, err
@@ -420,8 +481,10 @@ func (c *client) SetRange(key string, offset, value int) (int, error) {
 	return v, nil
 }
 
-// STRLEN key Get the length of the value stored in a key
-func (c *client) StrLen(key string) (int, error) {
+// STRLEN key
+// Get the length of the value stored in a key
+// Integer reply: the length of the string at key, or 0 when key does not exist.
+func (c *client) StrLen(key interface{}) (int, error) {
 	resp, err := c.executeCommand("StrLen", key)
 	if err != nil {
 		return 0, err
@@ -429,3 +492,5 @@ func (c *client) StrLen(key string) (int, error) {
 	v := resp.(int)
 	return v, nil
 }
+
+// [END] RESP Strings
