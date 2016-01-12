@@ -336,13 +336,12 @@ func (c *client) Del(key interface{}, keys ...interface{}) (int, error) {
 // DUMP key
 // Return a serialized version of the value stored at the specified key.
 // Bulk string reply: the serialized value.
-func (c *client) Dump(key interface{}, keys ...interface{}) (interface{}, error) {
-	p := constructParameters(keys, key)
-	rsp, err := c.executeCommand("DUMP", p...)
+func (c *client) Dump(key interface{}) (interface{}, error) {
+	rsp, err := c.executeCommand("DUMP", key)
 	if err != nil {
 		return nil, err
 	}
-	v, e := parseInt(rsp)
+	v, e := parseStringEx(rsp)
 	return v, e
 }
 
@@ -365,7 +364,7 @@ func (c *client) Exists(key interface{}, keys ...interface{}) (int, error) {
 //     1 if the timeout was set.
 //     0 if key does not exist or the timeout could not be set.
 func (c *client) Expire(key interface{}, seconds int) (int, error) {
-	rsp, err := c.executeCommand("PEXPIREAT", key, seconds)
+	rsp, err := c.executeCommand("EXPIRE", key, seconds)
 	if err != nil {
 		return -1, err
 	}
@@ -379,7 +378,7 @@ func (c *client) Expire(key interface{}, seconds int) (int, error) {
 //     1 if the timeout was set.
 //     0 if key does not exist or the timeout could not be set.
 func (c *client) ExpireAt(key interface{}, timestamp int) (int, error) {
-	rsp, err := c.executeCommand("PEXPIREAT", key, timestamp)
+	rsp, err := c.executeCommand("EXPIREAT", key, timestamp)
 	if err != nil {
 		return -1, err
 	}

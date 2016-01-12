@@ -13,7 +13,7 @@ type respKeys interface {
 	// DUMP key
 	// Return a serialized version of the value stored at the specified key.
 	// Bulk string reply: the serialized value.
-	Dump(key interface{}, keys ...interface{}) (interface{}, error)
+	Dump(key interface{}) (interface{}, error)
 
 	// EXISTS key [key ...]
 	// Determine if a key exists

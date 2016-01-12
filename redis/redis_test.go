@@ -107,6 +107,84 @@ func TestQuit(t *testing.T) {
 
 // [BEGIN] RESP KEYS
 
+func TestDel(t *testing.T) {
+	const (
+		key   = "TEST:DEL"
+		value = "value"
+	)
+	client.Set(key, value)
+	s, _ := client.Del(key)
+	if s != 1 {
+		t.Error("Del did not work properly.")
+	}
+}
+
+func TestDump(t *testing.T) {
+	const (
+		key        = "TEST:DUMP"
+		value      = key
+		serialized = "\x00\tTEST:DUMP\a\x00>\xc2\x01e\xfb\xed\x7f\xe8"
+	)
+	client.Set(key, value)
+	r, _ := client.Dump(key)
+	s, _ := r.(string)
+	if serialized != s {
+		t.Errorf("Dump did not work properly. E:%s, R:%s, O:%v", value, s, r)
+	}
+}
+
+func TestExists(t *testing.T) {
+	const (
+		key0  = "TEST:EXISTS0"
+		key1  = "TEST:EXISTS1"
+		key2  = "EST:EXISTS2"
+		value = "TEST:EXISTS"
+	)
+	client.Set(key0, value)
+	client.Set(key1, value)
+	client.Del(key2)
+	r, _ := client.Exists(key0, key1, key2)
+	if r != 2 {
+		t.Errorf("Exists did not work properly. E:%s, R:%s", 2, r)
+	}
+}
+
+func TestExpire(t *testing.T) {
+	const (
+		key     = "TEST:EXPIRE"
+		value   = key
+		seconds = 10
+	)
+	client.Del(key)
+	r, _ := client.Expire(key, seconds)
+	if r != 0 {
+		t.Error("Expire did not work properly.")
+	}
+	client.Set(key, value)
+	r, _ = client.Expire(key, seconds)
+	if r != 1 {
+		t.Error("Expire did not work properly.")
+	}
+}
+
+func TestExpireAt(t *testing.T) {
+	const (
+		key       = "TEST:EXPIREAT"
+		value     = key
+		timestamp = 10000
+	)
+	client.Del(key)
+	r, _ := client.ExpireAt(key, timestamp)
+	if r != 0 {
+		t.Error("ExpireAt did not work properly.")
+	}
+	client.Set(key, value)
+	r, _ = client.ExpireAt(key, timestamp)
+	if r != 1 {
+		t.Error("ExpireAt did not work properly.")
+	}
+}
+
 func TestKeys(t *testing.T) {
 	const (
 		key     = "TEST:KEYS"
@@ -121,17 +199,90 @@ func TestKeys(t *testing.T) {
 
 }
 
-func TestDel(t *testing.T) {
+func TestMigrate(t *testing.T) {}
+
+func TestMove(t *testing.T) {}
+
+func TestObject(t *testing.T) {}
+
+func TestPersist(t *testing.T) {
 	const (
-		key   = "TEST:DEL"
-		value = "value"
+		key   = "TEST:PERSIST"
+		value = key
 	)
+	client.Del(key)
+	r, _ := client.Persist(key)
+	if r != 0 {
+		t.Error("Persist did not work properly.")
+	}
 	client.Set(key, value)
-	s, _ := client.Del(key)
-	if s != 1 {
-		t.Error("Del did not work properly.")
+	r, _ = client.Persist(key)
+	if r != 0 {
+		t.Error("Persist did not work properly.")
+	}
+	client.Expire(key, 10000)
+	r, _ = client.Persist(key)
+	if r != 1 {
+		v, _ := client.Get(key)
+		t.Errorf("Persist did not work properly. V:%s", v)
 	}
 }
+
+func TestPexpire(t *testing.T) {
+	const (
+		key     = "TEST:PEXPIRE"
+		value   = key
+		seconds = 10
+	)
+	client.Del(key)
+	r, _ := client.PExpire(key, seconds)
+	if r != 0 {
+		t.Error("PExpire did not work properly.")
+	}
+	client.Set(key, value)
+	r, _ = client.PExpire(key, seconds)
+	if r != 1 {
+		t.Error("PExpire did not work properly.")
+	}
+}
+
+func TestPexpireAt(t *testing.T) {
+	const (
+		key       = "TEST:PEXPIREAT"
+		value     = key
+		timestamp = 10000
+	)
+	client.Del(key)
+	r, _ := client.PExpireAt(key, timestamp)
+	if r != 0 {
+		t.Error("PExpireAt did not work properly.")
+	}
+	client.Set(key, value)
+	r, _ = client.PExpireAt(key, timestamp)
+	if r != 1 {
+		t.Error("PExpireAt did not work properly.")
+	}
+}
+
+func TestPTtl(t *testing.T) {}
+
+func TestRandomKey(t *testing.T) {}
+
+func TestRename(t *testing.T) {}
+
+func TestRenameNx(t *testing.T) {}
+
+func TestRestore(t *testing.T) {}
+
+func TestSort(t *testing.T) {}
+
+func TestTtl(t *testing.T) {}
+
+func TestType(t *testing.T) {}
+
+func TestWait(t *testing.T) {}
+
+func TestScan(t *testing.T) {}
 
 // [END] RESP KEYS
 
@@ -146,19 +297,6 @@ func TestAppend(t *testing.T) {
 	s, _ := client.Append(key, value)
 	if s != len(value)*2 {
 		t.Errorf("Append dit not work properly. [%d]", s)
-	}
-}
-
-func TestSetBit(t *testing.T) {
-	const (
-		key    = "TEST:SETBIT"
-		offset = 10
-		bit    = 1
-	)
-	client.SetBit(key, offset, bit)
-	b, _ := client.SetBit(key, offset, bit)
-	if b != bit {
-		t.Error("SetBit did not work properly.")
 	}
 }
 
@@ -177,36 +315,12 @@ func TestBitCount(t *testing.T) {
 	}
 }
 
-func TestSet(t *testing.T) {
-	const (
-		key   = "TEST:SET"
-		value = "foobuzz"
-	)
-	s, e := client.Set(key, value)
-	if e != nil {
-		t.Errorf("Set dit not work properly: %s", e.Error())
-	}
-	if s != "OK" {
-		t.Errorf("Set dit not work properly. [%s]", s)
-	}
+func TestBitOp(t *testing.T) {
+
 }
 
-func TestGet(t *testing.T) {
-	const (
-		key   = "TEST:GET"
-		value = "foobuzz"
-	)
-	args := make([]interface{}, 2)
-	args[0] = key
-	args[1] = value
-	stat, _ := client.Set(key, value)
-	if stat != "OK" {
-		t.Fatalf("Get dit not work properly, result: %s, expected: %s", stat, "OK")
-	}
-	v, _ := client.Get(key)
-	if v != value {
-		t.Fatalf("Get dit not work properly, result: [%s], expected: %s.", v, value)
-	}
+func TestBitPOs(t *testing.T) {
+
 }
 
 func TestDecr(t *testing.T) {
@@ -233,6 +347,30 @@ func TestDecrBy(t *testing.T) {
 		t.Fatalf("DecrBy dit not work properly.")
 	}
 }
+
+func TestGet(t *testing.T) {
+	const (
+		key   = "TEST:GET"
+		value = "foobuzz"
+	)
+	args := make([]interface{}, 2)
+	args[0] = key
+	args[1] = value
+	stat, _ := client.Set(key, value)
+	if stat != "OK" {
+		t.Fatalf("Get dit not work properly, result: %s, expected: %s", stat, "OK")
+	}
+	v, _ := client.Get(key)
+	if v != value {
+		t.Fatalf("Get dit not work properly, result: [%s], expected: %s.", v, value)
+	}
+}
+
+func TsetGetBit(t *testing.T) {}
+
+func TsetGetRange(t *testing.T) {}
+
+func TsetGetSet(t *testing.T) {}
 
 func TestIncr(t *testing.T) {
 	const (
@@ -271,5 +409,48 @@ func TestIncrByFloat(t *testing.T) {
 		t.Fatalf("IncrByFloat dit not work properly.")
 	}
 }
+
+func TestMGet(t *testing.T) {}
+
+func TestMSet(t *testing.T) {}
+
+func TestMSetNx(t *testing.T) {}
+
+func TestPSetEx(t *testing.T) {}
+
+func TestSet(t *testing.T) {
+	const (
+		key   = "TEST:SET"
+		value = "foobuzz"
+	)
+	s, e := client.Set(key, value)
+	if e != nil {
+		t.Errorf("Set dit not work properly: %s", e.Error())
+	}
+	if s != "OK" {
+		t.Errorf("Set dit not work properly. [%s]", s)
+	}
+}
+
+func TestSetBit(t *testing.T) {
+	const (
+		key    = "TEST:SETBIT"
+		offset = 10
+		bit    = 1
+	)
+	client.SetBit(key, offset, bit)
+	b, _ := client.SetBit(key, offset, bit)
+	if b != bit {
+		t.Error("SetBit did not work properly.")
+	}
+}
+
+func TestSetEx(t *testing.T) {}
+
+func TestSetNx(t *testing.T) {}
+
+func TestSetrange(t *testing.T) {}
+
+func TestStrLen(t *testing.T) {}
 
 // [END] RESP STRINGS
