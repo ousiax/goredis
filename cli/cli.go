@@ -14,6 +14,21 @@ import (
 	"strings"
 )
 
+func print(p interface{}) {
+	switch v := p.(type) {
+	case string, int:
+		fmt.Println(v)
+	case []byte:
+		fmt.Println(string(v))
+	case []interface{}:
+		for _, k := range v {
+			print(k)
+		}
+	default:
+		fmt.Println(v)
+	}
+}
+
 func main() {
 	hostnamePtr := flag.String("h", "127.0.0.1", "Server hostname (default: 127.0.0.1).")
 	portPtr := flag.Int("p", 6379, "Server port (default: 6379).")
@@ -44,20 +59,13 @@ func main() {
 			break
 		}
 		s := strings.Split(raw, " ")
-		// command := make([]byte, 0) // if the cap > 0, slice always insert a \x00, why?
-		// command = append(command, fmt.Sprintf("*%s\r\n", strconv.Itoa(len(s)))...)
-		// for _, p := range s {
-		// 	command = append(command, fmt.Sprintf("$%d\r\n%s\r\n", len(p), p)...)
-		// }
-		// //fmt.Printf("%q\n", command) // for debug to output raw command bytes
-		// resp, e := client.Send(string(command))
 		args := make([]interface{}, len(s[1:]))
 		for i := 0; i < len(args); i++ {
 			args[i] = s[1+i]
 		}
-		resp, e := client.Send(s[0], args...)
+		rsp, e := client.Send(s[0], args...)
 		if e == nil {
-			fmt.Printf("%v\n", resp)
+			print(rsp)
 		} else {
 			fmt.Printf("%v\n", err.Error())
 		}

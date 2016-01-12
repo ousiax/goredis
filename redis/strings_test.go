@@ -45,13 +45,13 @@ func TestGet(t *testing.T) {
 	args := make([]interface{}, 2)
 	args[0] = testKey
 	args[1] = testValue
-	stat, _ := client.Send("SET", args...)
+	stat, _ := client.Set(testKey, testValue)
 	if stat != "OK" {
-		t.Fatalf("Set dit not work properly, result: %s, expected: %s.", stat, "OK")
+		t.Fatalf("Get dit not work properly, result: %s, expected: %s", stat, "OK")
 	}
 	v, _ := client.Get(testKey)
 	if v != testValue {
-		t.Fatalf("Set dit not work properly, result: [%s], expected: %s.", v, testValue)
+		t.Fatalf("Get dit not work properly, result: [%s], expected: %s.", v, testValue)
 	}
 }
 
@@ -120,7 +120,11 @@ func TestIncrByFloat(t *testing.T) {
 
 	client.Set("k", "100")
 	v, e := client.IncrByFloat("k", float64(2.5))
-	if e != nil || v != 102.5 {
+	if e != nil {
+		t.Fatalf("IncrByFloat dit not work properly. [%v]", e)
+	}
+
+	if v != 102.5 {
 		t.Fatalf("IncrByFloat dit not work properly.")
 	}
 }

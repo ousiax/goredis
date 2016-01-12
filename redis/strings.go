@@ -49,7 +49,7 @@ type respStringer interface {
 	// GETRANGE key start end
 	// Get a substring of the string stored at a key
 	// Bulk string reply: the substring of the string stored
-	GetRange(key interface{}, start, end int) (interface{}, error)
+	GetRange(key interface{}, start, end int) (string, error)
 
 	// GETSET key value
 	// Set the string value of a key and return its old value
