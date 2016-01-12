@@ -199,21 +199,21 @@ func parseFloat(p interface{}) (float64, error) {
 	}
 }
 
-// parseStringEx returns a nil or string, otherwise a nil when a error occured.
+// parseStringEx parses a RESP Bulk String or a Simple String to a string or a nil, otherwise a nil when a error occured.
 func parseStringEx(p interface{}) (interface{}, error) {
 	switch v := p.(type) {
-	case string:
-		return v, nil
 	case []byte:
 		return string(v), nil
 	case nil:
 		return nil, nil
+	case string:
+		return v, nil
 	default:
 		return nil, strconv.ErrRange
 	}
 }
 
-// parseString return a empty string if p is nil or a error occured, otherwise a string.
+// parseString returns a string if p is a string type, otherwise a empty string.
 // usually, the p is a string or a nil (i.e. a zero value).
 func parseString(p interface{}) string {
 	s, _ := p.(string)
