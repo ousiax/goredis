@@ -7,6 +7,7 @@ package redis
 import (
 	"bufio"
 	"bytes"
+	"errors"
 	"fmt"
 	"net"
 	"strconv"
@@ -388,13 +389,21 @@ func (c *client) IncrByFloat(key interface{}, decrement float64) (float64, error
 // Get the values of all the given keys
 // Array reply: list of values at the specified keys.
 func (c *client) MGet(key interface{}, keys ...interface{}) ([]interface{}, error) {
-	// args := make([]interface{}, 1+len(keys))
-	// args[0] = key
-	// for i := 0; i < len(keys); i++ {
-	// 	args[i+1] = keys[i]
-	// }
-	// return c.executeCommand("MGET", args...)
-	return nil, nil
+	args := make([]interface{}, 1+len(keys))
+	args[0] = key
+	for i := 0; i < len(keys); i++ {
+		args[i+1] = keys[i]
+	}
+	rsp, err := c.executeCommand("MGET", args...)
+	if err != nil {
+		return nil, err
+	}
+	v, e := rsp.([]interface{})
+	if e {
+		return v, nil
+	} else {
+		return nil, errors.New("redis.MGet: not a valid reply.")
+	}
 }
 
 // MSET key value [key value ...]
