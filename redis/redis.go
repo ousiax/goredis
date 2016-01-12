@@ -213,15 +213,11 @@ func parseStringEx(p interface{}) (interface{}, error) {
 	}
 }
 
-// parseString return a empty string if p is nil or a error occured, otherwise a string
-func parseString(p interface{}) (string, error) {
-	v, e := parseStringEx(p)
-	if v == nil {
-		return "", e
-	} else if e == nil {
-		return v.(string), nil
-	}
-	return "", e
+// parseString return a empty string if p is nil or a error occured, otherwise a string.
+// usually, the p is a string or a nil (i.e. a zero value).
+func parseString(p interface{}) string {
+	s, _ := p.(string)
+	return s
 }
 
 // [BEGIN] RESP Strings
@@ -341,8 +337,8 @@ func (c *client) GetRange(key interface{}, start, end int) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	v, e := parseString(rsp)
-	return v, e
+	v := parseString(rsp)
+	return v, nil
 }
 
 // GETSET key value
@@ -415,8 +411,8 @@ func (c *client) MSet(key, value interface{}, p ...interface{}) (string, error) 
 	if err != nil {
 		return "", err
 	}
-	v, e := parseString(rsp)
-	return v, e
+	v := parseString(rsp)
+	return v, nil
 }
 
 // MSETNX key value [key value ...]
@@ -447,8 +443,8 @@ func (c *client) PSetEx(key interface{}, milliseconds int, value interface{}) (s
 	if err != nil {
 		return "", err
 	}
-	v, e := parseString(rsp)
-	return v, e
+	v := parseString(rsp)
+	return v, nil
 }
 
 // SET key value [EX seconds] [PX milliseconds] [NX|XX]
@@ -466,8 +462,8 @@ func (c *client) Set(key, value interface{}, p ...interface{}) (string, error) {
 	if e != nil {
 		return "", e
 	}
-	v, e := parseString(rsp)
-	return v, e
+	v := parseString(rsp)
+	return v, nil
 }
 
 // SETBIT key offset value
@@ -490,8 +486,8 @@ func (c *client) SetEx(key interface{}, seconds int, value interface{}) (string,
 	if err != nil {
 		return "", err
 	}
-	v, e := parseString(rsp)
-	return v, e
+	v := parseString(rsp)
+	return v, nil
 }
 
 // SETNX key value
