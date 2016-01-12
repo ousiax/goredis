@@ -90,7 +90,7 @@ type respStringer interface {
 
 	// PSETEX key milliseconds value
 	// Set the value and expiration in milliseconds of a key
-	// Simple string reply
+	// Simple string reply: OK if SET was executed correctly.
 	PSetEx(key interface{}, milliseconds int, value interface{}) (string, error)
 
 	// SET key value [EX seconds] [PX milliseconds] [NX|XX]
@@ -106,7 +106,7 @@ type respStringer interface {
 
 	// SETEX key seconds value
 	// Set the value and expiration of a key
-	// Simple string reply
+	// Simple string reply: OK if SET was executed correctly.
 	SetEx(key interface{}, seconds int, value interface{}) (string, error)
 
 	// SETNX key value
@@ -119,7 +119,7 @@ type respStringer interface {
 	// SETRANGE key offset value
 	// Overwrite part of a string at key starting at the specified offset
 	// Integer reply: the length of the string after it was modified by the command.
-	SetRange(key interface{}, offset, value int) (int, error)
+	SetRange(key interface{}, offset int, value interface{}) (int, error)
 
 	// STRLEN key
 	// Get the length of the value stored in a key

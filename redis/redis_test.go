@@ -27,6 +27,9 @@ func setup() error {
 }
 
 func tearDown() error {
+	keys, _ := client.Keys("TEST:*")
+	client.Del(keys[0], keys[1:]...)
+	client.Quit()
 	return client.Close()
 }
 
@@ -42,11 +45,10 @@ func TestMain(m *testing.M) {
 
 // [BEGIN] RESP CONNECTION
 
-const (
-	password = "password"
-)
-
 func TestAuth(t *testing.T) {
+	const (
+		password = "password"
+	)
 	rsp, err := client.Auth(password)
 	if err != nil {
 		t.Logf("Auth: %v", err)
@@ -103,18 +105,84 @@ func TestQuit(t *testing.T) {
 
 // [END] RESP CONNECTION
 
+// [BEGIN] RESP KEYS
+
+func TestKeys(t *testing.T) {
+	const (
+		key     = "TEST:KEYS"
+		pattern = key
+	)
+	client.Set(key, pattern)
+	rsp, _ := client.Keys(pattern)
+	s := rsp[0].(string)
+	if s != key {
+		t.Errorf("Keys did not work properly. E:%s, R:%s", key, s)
+	}
+
+}
+
+func TestDel(t *testing.T) {
+	const (
+		key   = "TEST:DEL"
+		value = "value"
+	)
+	client.Set(key, value)
+	s, _ := client.Del(key)
+	if s != 1 {
+		t.Error("Del did not work properly.")
+	}
+}
+
+// [END] RESP KEYS
+
 // [BEGIN] RESP STRINGS
 
-const (
-	testKey   = "foobar"
-	testValue = "foobuzz"
-)
+func TestAppend(t *testing.T) {
+	const (
+		key   = "TEST:APPEND"
+		value = "foobuzz"
+	)
+	client.Set(key, value)
+	s, _ := client.Append(key, value)
+	if s != len(value)*2 {
+		t.Errorf("Append dit not work properly. [%d]", s)
+	}
+}
+
+func TestSetBit(t *testing.T) {
+	const (
+		key    = "TEST:SETBIT"
+		offset = 10
+		bit    = 1
+	)
+	client.SetBit(key, offset, bit)
+	b, _ := client.SetBit(key, offset, bit)
+	if b != bit {
+		t.Error("SetBit did not work properly.")
+	}
+}
+
+func TestBitCount(t *testing.T) {
+	const (
+		key   = "TEST:BITCOUNT"
+		count = 10
+		bit   = 1
+	)
+	for i := 0; i < count; i++ {
+		client.SetBit(key, i, 1)
+	}
+	s, _ := client.BitCount(key)
+	if s != count {
+		t.Errorf("BitCount dit not work properly. R:%d", s)
+	}
+}
 
 func TestSet(t *testing.T) {
-	if client == nil {
-		t.Fatal("Hello world!")
-	}
-	s, e := client.Set(testKey, testValue)
+	const (
+		key   = "TEST:SET"
+		value = "foobuzz"
+	)
+	s, e := client.Set(key, value)
 	if e != nil {
 		t.Errorf("Set dit not work properly: %s", e.Error())
 	}
@@ -124,59 +192,82 @@ func TestSet(t *testing.T) {
 }
 
 func TestGet(t *testing.T) {
+	const (
+		key   = "TEST:GET"
+		value = "foobuzz"
+	)
 	args := make([]interface{}, 2)
-	args[0] = testKey
-	args[1] = testValue
-	stat, _ := client.Set(testKey, testValue)
+	args[0] = key
+	args[1] = value
+	stat, _ := client.Set(key, value)
 	if stat != "OK" {
 		t.Fatalf("Get dit not work properly, result: %s, expected: %s", stat, "OK")
 	}
-	v, _ := client.Get(testKey)
-	if v != testValue {
-		t.Fatalf("Get dit not work properly, result: [%s], expected: %s.", v, testValue)
+	v, _ := client.Get(key)
+	if v != value {
+		t.Fatalf("Get dit not work properly, result: [%s], expected: %s.", v, value)
 	}
 }
 
 func TestDecr(t *testing.T) {
-	client.Set("k", "100")
-	v, e := client.Decr("k")
-	if e != nil || v != 99 {
+	const (
+		key   = "TEST:DECR"
+		value = 100
+	)
+	client.Set(key, value)
+	v, _ := client.Decr(key)
+	if v != value-1 {
 		t.Fatalf("Decr dit not work properly.")
 	}
 }
 
 func TestDecrBy(t *testing.T) {
-	client.Set("k", "100")
-	v, e := client.DecrBy("k", 10)
-	if e != nil || v != 90 {
+	const (
+		key       = "TEST:DECRBY"
+		value     = 100
+		decrement = 10
+	)
+	client.Set(key, value)
+	v, _ := client.DecrBy(key, decrement)
+	if v != value-decrement {
 		t.Fatalf("DecrBy dit not work properly.")
 	}
 }
 
 func TestIncr(t *testing.T) {
-	client.Set("k", "100")
-	v, e := client.Incr("k")
-	if e != nil || v != 101 {
+	const (
+		key   = "TEST:INCR"
+		value = 100
+	)
+	client.Set(key, value)
+	v, e := client.Incr(key)
+	if e != nil || v != value+1 {
 		t.Fatalf("Incr dit not work properly.")
 	}
 }
 
 func TestIncrBy(t *testing.T) {
-	client.Set("k", "100")
-	v, e := client.IncrBy("k", 10)
-	if e != nil || v != 110 {
+	const (
+		key       = "TEST:INCRBY"
+		value     = 100
+		increment = 10
+	)
+	client.Set(key, value)
+	v, e := client.IncrBy(key, increment)
+	if e != nil || v != value+increment {
 		t.Fatalf("IncrBy dit not work properly.")
 	}
 }
 
 func TestIncrByFloat(t *testing.T) {
-	client.Set("k", "100")
-	v, e := client.IncrByFloat("k", float64(2.5))
-	if e != nil {
-		t.Fatalf("IncrByFloat dit not work properly. [%v]", e)
-	}
-
-	if v != 102.5 {
+	const (
+		key       = "TEST:INCRBYFLOAT"
+		value     = 100
+		increment = 1.25
+	)
+	client.Set(key, value)
+	v, _ := client.IncrByFloat(key, increment)
+	if v != value+increment {
 		t.Fatalf("IncrByFloat dit not work properly.")
 	}
 }
