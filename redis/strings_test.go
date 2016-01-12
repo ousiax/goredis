@@ -5,7 +5,7 @@
 package redis_test
 
 import (
-	"github.com/qqbuby/redis-go/redis"
+	"github.com/qqbuby/goredis/redis"
 	"testing"
 )
 

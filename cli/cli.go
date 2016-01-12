@@ -8,7 +8,7 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
-	"github.com/qqbuby/redis-go/redis"
+	"github.com/qqbuby/goredis/redis"
 	"os"
 	"strconv"
 	"strings"

@@ -15,8 +15,6 @@ import (
 type Client interface {
 	respStringer
 	Send(commandName string, args ...interface{}) (reply interface{}, err error)
-	//Receive() (resp interface{}, err error)
-	//RawReceive() (resp []byte, err error)
 	Close() (err error)
 }
 

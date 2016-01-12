@@ -7,7 +7,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/qqbuby/redis-go/redis"
+	"github.com/qqbuby/goredis/redis"
 	"strconv"
 )
 
