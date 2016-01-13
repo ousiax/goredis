@@ -115,7 +115,7 @@ type respKeys interface {
 	// RESTORE key ttl serialized-value [REPLACE]
 	// Create a key using the provided serialized value, previously obtained using DUMP.
 	// Simple string reply: The command returns OK on success.
-	// Restore(key interface{}, ttl int, serializedValue interface{}, replace bool)
+	Restore(key interface{}, ttl int, serializedValue interface{}, replace bool) (string, error)
 
 	// SCAN cursor [MATCH pattern] [COUNT count]
 	// Incrementally iterate the keys space

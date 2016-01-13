@@ -17,8 +17,9 @@ type Client interface {
 	respCluster
 	respConnection
 	respKeys
+	respLists
 	respServer
-	respStringer
+	respStrings
 	respTransaction
 	respPubSub
 	respHyperLogLog
@@ -530,7 +531,20 @@ func (c *client) RenameNx(key, newkey string) (int, error) {
 // RESTORE key ttl serialized-value [REPLACE]
 // Create a key using the provided serialized value, previously obtained using DUMP.
 // Simple string reply: The command returns OK on success.
-// Restore(key interface{}, ttl int, serializedValue interface{}, replace bool)
+func (c *client) Restore(key interface{}, ttl int, serializedValue interface{}, replace bool) (string, error) {
+	var rsp interface{}
+	var err error
+	if replace {
+		rsp, err = c.executeCommand("RESTORE", key, ttl, serializedValue, "REPLACE")
+	} else {
+		rsp, err = c.executeCommand("RESTORE", key, ttl, serializedValue)
+	}
+	if err != nil {
+		return "", err
+	}
+	v, e := parseString(rsp)
+	return v, e
+}
 
 // SCAN cursor [MATCH pattern] [COUNT count]
 // Incrementally iterate the keys space

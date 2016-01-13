@@ -4,7 +4,7 @@
 
 package redis
 
-type respStringer interface {
+type respStrings interface {
 	// APPEND key value
 	// Append a value to a key
 	// Integer reply: the length of the string after the append operation.

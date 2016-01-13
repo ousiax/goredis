@@ -119,18 +119,18 @@ func TestDel(t *testing.T) {
 	}
 }
 
-func ETestDump(t *testing.T) {
+func TestDump(t *testing.T) {
 	const (
-		key               = "TEST:DUMP"
-		value             = key
-		serialized        = "\x00\tTEST:DUMP\a\x00>\xc2\x01e\xfb\xed\x7f\xe8" //OSX
-		serializedDebian8 = "\x00\tTEST:DUMP\x06\x00W\x1d\xbc\x16\x06r\x96a"
+		key   = "TEST:DUMP"
+		value = key
 	)
 	client.Set(key, value)
-	r, _ := client.Dump(key)
-	s, _ := r.(string)
-	if serialized != s {
-		t.Errorf("Dump did not work properly. E:%s, R:%s, O:%v", value, s, r)
+	serial, _ := client.Dump(key)
+	client.Del(key)
+	client.Restore(key, 0, serial, false)
+	s, _ := client.Get(key)
+	if s != value {
+		t.Errorf("Dump did not work properly. E:%s, R:%s", value, s)
 	}
 }
 
@@ -202,7 +202,25 @@ func TestKeys(t *testing.T) {
 
 func TestMigrate(t *testing.T) {}
 
-func TestMove(t *testing.T) {}
+func TestMove(t *testing.T) {
+	const (
+		key   = "TEST:MOVE"
+		value = key
+		db    = 1
+	)
+	client.Select(0)
+	client.Set(key, value)
+	client.Move(key, db)
+	v, _ := client.Get(key)
+	if v != nil {
+		t.Errorf("Move did not work properly. E:%s, R:%s", nil, v)
+	}
+	client.Select(db)
+	v, _ = client.Get(key)
+	if v != value {
+		t.Errorf("Move did not work properly. E:%s, R:%s", value, v)
+	}
+}
 
 func TestObject(t *testing.T) {}
 
@@ -265,21 +283,133 @@ func TestPexpireAt(t *testing.T) {
 	}
 }
 
-func TestPTtl(t *testing.T) {}
+func TestPTtl(t *testing.T) {
+	const (
+		key   = "TEST:PTTL"
+		value = key
+	)
+	client.Del(key)
+	v, _ := client.Pttl(key)
+	if v != -2 {
+		t.Errorf("Keys did not work properly. E:%s, R:%s", -2, v)
+	}
+	client.Set(key, value)
+	v, _ = client.Pttl(key)
+	if v != -1 {
+		t.Errorf("Keys did not work properly. E:%s, R:%s", -1, v)
+	}
+	client.Expire(key, 10000)
+	v, _ = client.Pttl(key)
+	if v <= 0 {
+		t.Errorf("Keys did not work properly. R:%s", v)
+	}
+}
 
-func TestRandomKey(t *testing.T) {}
+func TestRandomKey(t *testing.T) {
+	const (
+		key   = "TEST:RANDOMKEY"
+		value = key
+	)
+	client.Set(key, value)
+	k, _ := client.RandomKey()
+	if k == nil {
+		t.Errorf("RandomKey did not work properly. R:%v", k)
+	}
+}
 
-func TestRename(t *testing.T) {}
+func TestRename(t *testing.T) {
+	const (
+		key    = "TEST:RENAME"
+		value  = key
+		newkey = "TEST:RENAME:NEWKEY"
+	)
+	client.Set(key, value)
+	client.Rename(key, newkey)
+	v, _ := client.Get(newkey)
+	if v != value {
+		t.Errorf("Rename did not work properly. E:%s, R:%s", value, v)
+	}
+	client.Del(key)
+}
 
-func TestRenameNx(t *testing.T) {}
+func TestRenameNx(t *testing.T) {
+	const (
+		key    = "TEST:RENAMENX"
+		value  = key
+		newkey = "TEST:RENAMENX:NEWKEY"
+	)
+	client.Set(key, value)
+	client.Set(newkey, value)
+	s, _ := client.RenameNx(key, newkey)
+	if s == 1 {
+		t.Errorf("RenameNx did not work properly. R:%s", s)
+	}
+	client.Del(newkey)
+	s, _ = client.RenameNx(key, newkey)
+	if s == 0 {
+		t.Errorf("Rename did not work properly. R:%s", s)
+	}
+}
 
-func TestRestore(t *testing.T) {}
+func TestRestore(t *testing.T) {
+	const (
+		key   = "TEST:RESTORE"
+		value = key
+	)
+	client.Set(key, value)
+	serial, _ := client.Dump(key)
+	e, _ := client.Restore(key, 0, serial, false)
+	if e == "OK" {
+		t.Error("Restore did not work properly.")
+	}
+	client.Del(key)
+	client.Restore(key, 0, serial, false)
+	s, _ := client.Get(key)
+	if s != value {
+		t.Errorf("Restore did not work properly. E:%s, R:%s", value, s)
+	}
+}
 
 func TestSort(t *testing.T) {}
 
-func TestTtl(t *testing.T) {}
+func TestTtl(t *testing.T) {
+	const (
+		key   = "TEST:TTL"
+		value = key
+	)
+	client.Del(key)
+	v, _ := client.Ttl(key)
+	if v != -2 {
+		t.Errorf("Ttl did not work properly. E:%s, R:%s", -2, v)
+	}
+	client.Set(key, value)
+	v, _ = client.Ttl(key)
+	if v != -1 {
+		t.Errorf("Ttl did not work properly. E:%s, R:%s", -1, v)
+	}
+	client.Expire(key, 10000)
+	v, _ = client.Ttl(key)
+	if v <= 0 {
+		t.Errorf("Ttl did not work properly. R:%s", v)
+	}
+}
 
-func TestType(t *testing.T) {}
+func TestType(t *testing.T) {
+	const (
+		key   = "TEST:TYPE"
+		value = key
+	)
+	client.Set(key, value)
+	v, _ := client.Type(key)
+	if v != "string" {
+		t.Errorf("Type did not work properly. E:%s, R:%s", "string", v)
+	}
+	client.Del(key)
+	v, _ = client.Type(key)
+	if v != "none" {
+		t.Errorf("Type did not work properly. E:%s, R:%s", "none", v)
+	}
+}
 
 func TestWait(t *testing.T) {}
 
