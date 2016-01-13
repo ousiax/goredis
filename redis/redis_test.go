@@ -15,8 +15,8 @@ var client redis.Client
 
 const (
 	network = "tcp"
-	// address = "127.0.0.1:6379"
-	address = "192.168.1.130:6379"
+	address = "127.0.0.1:6379"
+	//address = "192.168.1.130:6379"
 )
 
 func setup() error {
@@ -119,11 +119,12 @@ func TestDel(t *testing.T) {
 	}
 }
 
-func TestDump(t *testing.T) {
+func ETestDump(t *testing.T) {
 	const (
-		key        = "TEST:DUMP"
-		value      = key
-		serialized = "\x00\tTEST:DUMP\a\x00>\xc2\x01e\xfb\xed\x7f\xe8"
+		key               = "TEST:DUMP"
+		value             = key
+		serialized        = "\x00\tTEST:DUMP\a\x00>\xc2\x01e\xfb\xed\x7f\xe8" //OSX
+		serializedDebian8 = "\x00\tTEST:DUMP\x06\x00W\x1d\xbc\x16\x06r\x96a"
 	)
 	client.Set(key, value)
 	r, _ := client.Dump(key)

@@ -225,7 +225,7 @@ func parseStringEx(p interface{}) (interface{}, error) {
 // usually, the p is a string or a nil (i.e. a zero value).
 func parseString(p interface{}) (string, error) {
 	rsp, err := parseStringEx(p)
-	s := rsp.(string)
+	s, _ := rsp.(string)
 	return s, err
 }
 
