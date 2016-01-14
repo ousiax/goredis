@@ -7,6 +7,7 @@ package redis
 type respPubSub interface {
 	// PSUBSCRIBE pattern [pattern ...]
 	// Listen for messages published to channels matching the given patterns
+	PSubscribe(pattern interface{}, patterns ...interface{}) error
 
 	// PUBSUB subcommand [argument [argument ...]]
 	// Inspect the state of the Pub/Sub subsystem
@@ -31,13 +32,17 @@ type respPubSub interface {
 	// PUBLISH channel message
 	// Post a message to a channel
 	// Integer reply: the number of clients that received the message.
+	Publish(channel, message interface{}) (int, error)
 
 	// PUNSUBSCRIBE [pattern [pattern ...]]
 	// Stop listening for messages posted to channels matching the given patterns
+	PUnsubscribe(pattern interface{}, patterns ...interface{}) error
 
 	// SUBSCRIBE channel [channel ...]
 	// Listen for messages published to the given channels
+	Subscribe(channel interface{}, channels ...interface{}) error
 
 	// UNSUBSCRIBE [channel [channel ...]]
 	// Stop listening for messages posted to the given channels
+	Unsubscribe(channel interface{}, channels ...interface{}) error
 }
