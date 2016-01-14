@@ -16,7 +16,6 @@ var client redis.Client
 const (
 	network = "tcp"
 	address = "127.0.0.1:6379"
-	//address = "192.168.1.130:6379"
 )
 
 func setup() error {
@@ -585,3 +584,18 @@ func TestSetrange(t *testing.T) {}
 func TestStrLen(t *testing.T) {}
 
 // [END] RESP STRINGS
+
+// [BEGIN] MISCELLANEOUS
+
+func TestReceive(t *testing.T) {
+	const (
+		key   = "TEST:RECEIVE"
+		value = key
+	)
+	_, e := client.Restore(key, -1, value, true)
+	if e == nil {
+		t.Errorf("Miscellaneous did not work properly.")
+	}
+}
+
+// [END] MISCELLANEOUS

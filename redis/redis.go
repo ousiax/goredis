@@ -56,6 +56,7 @@ func (c *client) Send(commandName string, args ...interface{}) (reply interface{
 // receive returns the raw result without the symbols(+-:$*) and CR&LF.
 // string
 //    For Simple Strings the first byte of the reply is "+"
+// error
 //    For Errors the first byte of the reply is "-"
 // int
 //    For Integers the first byte of the reply is ":"
@@ -73,7 +74,7 @@ func (c *client) receive() (interface{}, error) {
 	}
 	symbol, rsp := line[0], line[1:len(line)-2] // trim first bit and CRLF
 	switch symbol {
-	case '+', '-':
+	case '+':
 		return string(rsp), nil
 	case ':':
 		return strconv.Atoi(string(rsp))
@@ -96,6 +97,8 @@ func (c *client) receive() (interface{}, error) {
 			reslt = append(reslt, rep)
 		}
 		return reslt, nil
+	case '-':
+		return nil, errors.New(string(rsp))
 	default:
 		panic(fmt.Sprintf("Protocol Error: %s, %s", string(symbol), string(rsp)))
 	}
