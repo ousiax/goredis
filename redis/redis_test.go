@@ -446,11 +446,35 @@ func TestBitCount(t *testing.T) {
 }
 
 func TestBitOp(t *testing.T) {
-
+	const (
+		operation = "AND"
+		destkey   = "TEST:BITOP:DESTKEY"
+		key1      = "TEST:BITOP:KEY1"
+		key2      = "TEST:BITOP:KEY2"
+		value1    = "foobar"
+		value2    = "abcdef"
+		value3    = "`bc`ab"
+	)
+	client.Set(key1, value1)
+	client.Set(key2, value2)
+	client.BitOp(operation, destkey, key1, key2)
+	s, _ := client.Get(destkey)
+	if s != value3 {
+		t.Errorf("BitOp did not work properly. E:%s, R:%s", value3, s)
+	}
 }
 
 func TestBitPOs(t *testing.T) {
-
+	const (
+		key = "TEST:BITPOS"
+		bit = 1
+		pos = 7
+	)
+	client.SetBit(key, pos, bit)
+	p, _ := client.BitPOs(key, bit)
+	if p != pos {
+		t.Errorf("BitPOs did not work properly. E:%s, R:%s", pos, p)
+	}
 }
 
 func TestDecr(t *testing.T) {
@@ -496,11 +520,36 @@ func TestGet(t *testing.T) {
 	}
 }
 
-func TsetGetBit(t *testing.T) {}
+func TsetGetBit(t *testing.T) {
+	const (
+		key = "TEST:GETBIT"
+		bit = 1
+		pos = 7
+	)
+	client.SetBit(key, pos, bit)
+	b, _ := client.GetBit(key, pos)
+	if b != bit {
+		t.Errorf("GetBit did not work properly. E:%s, R:%s", bit, b)
+	}
+}
 
 func TsetGetRange(t *testing.T) {}
 
-func TsetGetSet(t *testing.T) {}
+func TsetGetSet(t *testing.T) {
+	const (
+		key      = "TEST:GETSET"
+		value    = key
+		newValue = "TEST:GETSET:OLD"
+	)
+	v, _ := client.GetSet(key, value)
+	if v != nil {
+		t.Errorf("GetSet did not work properly. R:%s", v)
+	}
+	v, _ = client.GetSet(key, newValue)
+	if v != value {
+		t.Errorf("GetSet did not work properly. E:%s, R:%s", value, v)
+	}
+}
 
 func TestIncr(t *testing.T) {
 	const (
