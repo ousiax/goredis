@@ -520,7 +520,7 @@ func TestGet(t *testing.T) {
 	}
 }
 
-func TsetGetBit(t *testing.T) {
+func TestGetBit(t *testing.T) {
 	const (
 		key = "TEST:GETBIT"
 		bit = 1
@@ -533,9 +533,21 @@ func TsetGetBit(t *testing.T) {
 	}
 }
 
-func TsetGetRange(t *testing.T) {}
+func TestGetRange(t *testing.T) {
+	const (
+		key   = "TEST:GETRANGE"
+		value = key
+		start = 5
+		end   = len(key)
+	)
+	client.Set(key, value)
+	s, _ := client.GetRange(key, start, end)
+	if s != value[start:end] {
+		t.Errorf("GetRange did not work properly. E:%s, R:%s", value[start:end], s)
+	}
+}
 
-func TsetGetSet(t *testing.T) {
+func TestGetSet(t *testing.T) {
 	const (
 		key      = "TEST:GETSET"
 		value    = key
@@ -589,13 +601,67 @@ func TestIncrByFloat(t *testing.T) {
 	}
 }
 
-func TestMGet(t *testing.T) {}
+func TestMGet(t *testing.T) {
+	const (
+		key1   = "TEST:MGET:KEY1"
+		value1 = key1
+		key2   = "TEST:MGET:KEY2"
+		value2 = key2
+	)
+	client.MSet(key1, value1, key2, value2)
+	v, _ := client.MGet(key1, key2)
+	if !(string(v[0].([]byte)) == value1 && string(v[1].([]byte)) == value2) {
+		t.Error("MGet did not work properly.")
+	}
+}
 
-func TestMSet(t *testing.T) {}
+func TestMSet(t *testing.T) {
+	const (
+		key1   = "TEST:MSET:KEY1"
+		value1 = key1
+		key2   = "TEST:MSET:KEY2"
+		value2 = key2
+	)
+	v, _ := client.MSet(key1, value1, key2, value2)
+	if v != "OK" {
+		t.Errorf("MSet did not work properly. E:%s, R:%s", "OK", v)
+	}
+}
 
-func TestMSetNx(t *testing.T) {}
+func TestMSetNx(t *testing.T) {
+	const (
+		key1   = "TEST:MSETNX:KEY1"
+		value1 = key1
+		key2   = "TEST:MSETNX:KEY2"
+		value2 = key2
+	)
+	v, _ := client.MSetNx(key1, value1, key2, value2)
+	if v != 1 {
+		t.Errorf("MSetNx did not work properly. E:%d, R:%d", 1, v)
+	}
+	v, _ = client.MSetNx(key1, value1, key2, value2)
+	if v != 0 {
+		t.Errorf("MSetNx did not work properly. E:%d, R:%d", 0, v)
+	}
+}
 
-func TestPSetEx(t *testing.T) {}
+func TestPSetEx(t *testing.T) {
+	const (
+		key     = "TEST:PSETEX"
+		value   = key
+		seconds = 1000
+	)
+	client.Set(key, value)
+	_, e := client.PSetEx(key, -1, value)
+	if e == nil {
+		t.Error("PSetEx did not work properly.")
+	}
+
+	s, _ := client.PSetEx(key, seconds, value)
+	if s != "OK" {
+		t.Errorf("PSetEx did not work properly. E:%s, R:%s", "OK", s)
+	}
+}
 
 func TestSet(t *testing.T) {
 	const (
@@ -624,13 +690,62 @@ func TestSetBit(t *testing.T) {
 	}
 }
 
-func TestSetEx(t *testing.T) {}
+func TestSetEx(t *testing.T) {
+	const (
+		key     = "TEST:SETEX"
+		value   = key
+		seconds = 1000
+	)
+	client.Set(key, value)
+	_, e := client.SetEx(key, -1, value)
+	if e == nil {
+		t.Error("SetEx did not work properly.")
+	}
+	s, _ := client.SetEx(key, seconds, value)
+	if s != "OK" {
+		t.Errorf("SetEx did not work properly. E:%s, R:%s", "OK", s)
+	}
+}
 
-func TestSetNx(t *testing.T) {}
+func TestSetNx(t *testing.T) {
+	const (
+		key   = "TEST:SETNX"
+		value = key
+	)
+	i, _ := client.SetNx(key, value)
+	if i == 0 {
+		t.Errorf("SetNx did not work properly. E:%d, R:%d", 1, i)
+	}
 
-func TestSetrange(t *testing.T) {}
+	i, _ = client.SetNx(key, value)
+	if i == 1 {
+		t.Errorf("SetNx did not work properly. E:%d, R:%d", 0, i)
+	}
+}
 
-func TestStrLen(t *testing.T) {}
+func TestSetRange(t *testing.T) {
+	const (
+		key    = "TEST:SETRANGE"
+		value  = key
+		offset = 10
+	)
+	i, _ := client.SetRange(key, offset, value)
+	if i != len(value)+offset {
+		t.Errorf("SetRange did not work properly. E:%d, R:%d", len(value)+offset, i)
+	}
+}
+
+func TestStrLen(t *testing.T) {
+	const (
+		key   = "TEST:STRLEN"
+		value = key
+	)
+	client.Set(key, value)
+	i, _ := client.StrLen(key)
+	if i != len(value) {
+		t.Errorf("SetRange did not work properly. E:%d, R:%d", len(value), i)
+	}
+}
 
 // [END] RESP STRINGS
 
