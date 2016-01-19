@@ -17,7 +17,7 @@ type Client interface {
 	respCluster
 	respConnection
 	respKeys
-	respLists
+	// respLists
 	respServer
 	respStrings
 	respTransaction
