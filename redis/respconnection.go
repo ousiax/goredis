@@ -1,10 +1,10 @@
 // The MIT License (MIT)
-//
+
 // Copyright (c) 2016 Roy Xu
 
 package redis
 
-type respConnection interface {
+type respconnection interface {
 	// AUTH password
 	// Authenticate to the server
 	// Simple string reply

@@ -1,18 +1,22 @@
+// The MIT License (MIT)
+
+// Copyright (c) 2016 Roy Xu
+
 package redis
 
-type respLists interface {
+type resplists interface {
 	// BLPOP key [key ...] timeout
 	// Remove and get the first element in a list, or block until one is available
 	// Array reply: specifically:
-	//    	A nil multi-bulk when no element could be popped and the timeout expired.
-	//    	A two-element multi-bulk with the first element being the name of the key where an element was popped and the second element being the value of the popped element.
+	//      A nil multi-bulk when no element could be popped and the timeout expired.
+	//      A two-element multi-bulk with the first element being the name of the key where an element was popped and the second element being the value of the popped element.
 	BLPop(key interface{}, timeout int, keys ...interface{}) ([]interface{}, error)
 
 	// BRPOP key [key ...] timeout
 	// Remove and get the last element in a list, or block until one is available
 	// Array reply: specifically:
-	//    	A nil multi-bulk when no element could be popped and the timeout expired.
-	//    	A two-element multi-bulk with the first element being the name of the key where an element was popped and the second element being the value of the popped element.
+	//      A nil multi-bulk when no element could be popped and the timeout expired.
+	//      A two-element multi-bulk with the first element being the name of the key where an element was popped and the second element being the value of the popped element.
 	BRPop(key interface{}, timeout int, keys ...interface{}) (int, error)
 
 	// BRPOPLPUSH source destination timeout
@@ -58,9 +62,9 @@ type respLists interface {
 	// LREM key count value
 	// Remove elements from a list
 	// The count argument influences the operation in the following ways:
-	//   	count > 0: Remove elements equal to value moving from head to tail.
-	//   	count < 0: Remove elements equal to value moving from tail to head.
-	//   	count = 0: Remove all elements equal to value.
+	//      count > 0: Remove elements equal to value moving from head to tail.
+	//      count < 0: Remove elements equal to value moving from tail to head.
+	//      count = 0: Remove all elements equal to value.
 	// Integer reply: the number of removed elements.
 	LRem(key interface{}, count int, value interface{}) (int, error)
 

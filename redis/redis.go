@@ -1,5 +1,5 @@
 // The MIT License (MIT)
-//
+
 // Copyright (c) 2016 Roy Xu
 
 package redis
@@ -9,20 +9,22 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"log"
 	"net"
+	"net/url"
 	"strconv"
 )
 
 type Client interface {
-	respCluster
-	respConnection
-	respKeys
-	// respLists
-	respServer
-	respStrings
-	respTransaction
-	respPubSub
-	respHyperLogLog
+	respcluster
+	respconnection
+	respkeys
+	// resplists
+	respserver
+	respstrings
+	// resptransaction
+	resppubsub
+	resphyperloglog
 	Send(commandName string, args ...interface{}) (reply interface{}, err error)
 	Close() (err error)
 }
@@ -33,7 +35,13 @@ type client struct {
 	br   *bufio.Reader
 }
 
-func NewClient(network, address string) (Client, error) {
+func NewClient(urlstring string) (Client, error) {
+	u, e := url.Parse(urlstring)
+	if e != nil {
+		log.Fatal(e)
+	}
+	network := u.Scheme
+	address := u.Host
 	conn, err := net.Dial(network, address)
 	if err != nil {
 		return nil, err

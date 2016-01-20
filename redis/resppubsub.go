@@ -1,10 +1,10 @@
 // The MIT License (MIT)
-//
+
 // Copyright (c) 2016 Roy Xu
 
 package redis
 
-type respPubSub interface {
+type resppubsub interface {
 	// PSUBSCRIBE pattern [pattern ...]
 	// Listen for messages published to channels matching the given patterns
 	PSubscribe(pattern interface{}, patterns ...interface{}) error

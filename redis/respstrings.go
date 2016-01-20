@@ -1,10 +1,10 @@
 // The MIT License (MIT)
-//
+
 // Copyright (c) 2016 Roy Xu
 
 package redis
 
-type respStrings interface {
+type respstrings interface {
 	// APPEND key value
 	// Append a value to a key
 	// Integer reply: the length of the string after the append operation.

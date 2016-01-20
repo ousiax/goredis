@@ -1,5 +1,5 @@
 // The MIT License (MIT)
-//
+
 // Copyright (c) 2016 Roy Xu
 
 package redis_test
@@ -14,14 +14,13 @@ import (
 var client redis.Client
 
 const (
-	network = "tcp"
-	address = "127.0.0.1:6379"
+	urlstring = "tcp://192.168.128.134:6379"
 )
 
 func setup() error {
 	flag.Parse()
 	var err error
-	client, err = redis.NewClient(network, address)
+	client, err = redis.NewClient(urlstring)
 	return err
 }
 
@@ -88,7 +87,7 @@ func TestSelect(t *testing.T) {
 }
 
 func TestQuit(t *testing.T) {
-	client, e := redis.NewClient(network, address)
+	client, e := redis.NewClient(urlstring)
 	if e != nil {
 		t.Errorf("Quit: %s", e.Error())
 	}

@@ -1,10 +1,10 @@
 // The MIT License (MIT)
-//
+
 // Copyright (c) 2016 Roy Xu
 
 package redis
 
-type respServer interface {
+type respserver interface {
 	// BGREWRITEAOF Asynchronously rewrite the append-only file
 	// BGSAVE Asynchronously save the dataset to disk
 	// CLIENT KILL [ip:port] [ID client-id] [TYPE normal|slave|pubsub] [ADDR ip:port] [SKIPME yes/no] Kill the connection of a client

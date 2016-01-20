@@ -1,10 +1,10 @@
 // The MIT License (MIT)
-//
+
 // Copyright (c) 2016 Roy Xu
 
 package redis
 
-type respCluster interface {
+type respcluster interface {
 	// CLUSTER ADDSLOTS slot [slot ...] Assign new hash slots to receiving node
 	// CLUSTER COUNT-FAILURE-REPORTS node-id Return the number of failure reports active for a given node
 	// CLUSTER COUNTKEYSINSLOT slot Return the number of local keys in the specified hash slot

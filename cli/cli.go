@@ -33,11 +33,10 @@ func main() {
 	hostnamePtr := flag.String("h", "127.0.0.1", "Server hostname (default: 127.0.0.1).")
 	portPtr := flag.Int("p", 6379, "Server port (default: 6379).")
 	flag.Parse()
-
 	network := "tcp"
 	address := *hostnamePtr + ":" + strconv.Itoa(*portPtr)
-
-	client, err := redis.NewClient(network, address)
+	urlstring := network + "://" + address
+	client, err := redis.NewClient(urlstring)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -51,7 +50,7 @@ func main() {
 		fmt.Printf("%s>", address)
 
 		raw, _ := reader.ReadString('\n')
-		raw = strings.Trim(raw, "\n ")
+		raw = strings.Trim(raw, "\r\n ")
 		if len(raw) == 0 {
 			continue
 		}
@@ -67,7 +66,7 @@ func main() {
 		if e == nil {
 			print(rsp)
 		} else {
-			fmt.Printf("%v\n", err.Error())
+			fmt.Printf("%v\n", e.Error())
 		}
 	}
 }

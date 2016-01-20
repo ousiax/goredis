@@ -1,10 +1,10 @@
 // The MIT License (MIT)
-//
+
 // Copyright (c) 2016 Roy Xu
 
 package redis
 
-type respKeys interface {
+type respkeys interface {
 	// DEL key [key ...]
 	// Delete a key
 	// Integer reply: The number of keys that were removed.
