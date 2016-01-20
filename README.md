@@ -39,10 +39,9 @@ Redis Go Client &amp; Cluster
         portPtr := flag.Int("p", 6379, "Server port (default: 6379).")
         flag.Parse()
     
-        network := "tcp"
-        address := *hostnamePtr + ":" + strconv.Itoa(*portPtr)
-    
-        client, err := redis.NewClient(network, address)
+        urlstring := "tcp://" + *hostnamePtr + ":" + strconv.Itoa(*portPtr)
+
+        client, err := redis.NewClient(urlstring)
         if err != nil {
             fmt.Println(err)
             return
