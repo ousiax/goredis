@@ -1,11 +1,9 @@
-package client
+package redis
 
-import (
-	"github.com/qqbuby/goredis/redis"
-)
+import ()
 
 type Client struct {
-	conn *redis.Conn
+	conn *Conn
 }
 
 func New(rawurl string) (cli Client, err error) {
