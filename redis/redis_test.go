@@ -14,7 +14,8 @@ import (
 var client redis.Client
 
 const (
-	urlstring = "tcp://192.168.128.134:6379"
+	urlstring = "tcp://127.0.0.1:6379"
+	// urlstring = "tcp://192.168.128.134:6379"
 )
 
 func setup() error {
