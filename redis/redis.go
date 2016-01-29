@@ -12,8 +12,8 @@ type Client struct {
 	cn Conn
 }
 
-func NewClient(urlstring string) (Client, error) {
-	c, err := Dial(urlstring)
+func NewClient(url string) (Client, error) {
+	c, err := Dial(url)
 	cli := Client{cn: c}
 	return cli, err
 }
