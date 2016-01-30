@@ -2,75 +2,58 @@
 
 // Copyright (c) 2016 Roy Xu
 
-package pubsub
-
-import (
-	"github.com/qqbuby/goredis/redis"
-)
+package redis
 
 type PubSub struct {
-	cn redis.Conn
+	cn Conn
 }
 
-func NewClient(url string) (PubSub, error) {
-	c, err := redis.Dial(url)
+func NewPubSub(url string) (PubSub, error) {
+	c, err := Dial(url)
 	cli := PubSub{cn: c}
 	return cli, err
 }
 
-type MessageKind int
+type Kind int
 
 const (
-	SUBSCRIBE MessageKind = 1 + iota
+	SUBSCRIBE Kind = iota
 	UNSUBSCRIBE
-	MESSAGE
+	PSUBSCRIBE
+	PUNSUBSCRIBE
 )
 
-var messageKinds = []string{
+var kinds = []string{
 	"SUBSCRIBE",
 	"UNSUBSCRIBE",
-	"MESSAGE",
-}
-
-func (k MessageKind) String() string {
-	return messageKinds[k]
-}
-
-type PMessageKind int
-
-const (
-	PSUBSCRIBE PMessageKind = 1 + iota
-	PUNSUBSCRIBE
-	PMESSAGE
-)
-
-var pmessageKinds = []string{
 	"PSUBSCRIBE",
 	"PUNSUBSCRIBE",
-	"PMESSAGE",
 }
 
-func (k PMessageKind) String() string {
-	return pmessageKinds[k]
+func (k Kind) String() string {
+	return kinds[k]
+}
+
+type Subscription struct {
 }
 
 type Message struct {
-	Kind    MessageKind
 	Channel interface{}
-	Number  int
+	Text    interface{}
 }
 
 type PMessage struct {
-	Kind    MessageKind
-	Channel interface{}
 	Pattern interface{}
+	Channel interface{}
 	Text    interface{}
 }
 
 // PSUBSCRIBE pattern [pattern ...]
 // Listen for messages published to channels matching the given patterns
-func (p *PubSub) PSubscribe(pattern interface{}, patterns ...interface{}) ([]PMessage, error) {
-	return nil, nil
+func (p *PubSub) PSubscribe(pattern interface{}, patterns ...interface{}) error {
+	p.cn.Pipe("PSUBSCRIBE", pattern)
+	p.cn.Pipe("PSUBSCRIBE", patterns...)
+	return p.cn.Flush()
 }
 
 // PUBSUB subcommand [argument [argument ...]]
@@ -102,18 +85,42 @@ func (p *PubSub) Publish(channel, message interface{}) (int, error) {
 
 // PUNSUBSCRIBE [pattern [pattern ...]]
 // Stop listening for messages posted to channels matching the given patterns
-func (p *PubSub) PUnsubscribe(pattern interface{}, patterns ...interface{}) ([]PMessage, error) {
-	return nil, nil
+func (p *PubSub) PUnsubscribe(pattern interface{}, patterns ...interface{}) error {
+	p.cn.Pipe("PUNSUBSCRIBE", pattern)
+	p.cn.Pipe("PUNSUBSCRIBE", patterns...)
+	return p.cn.Flush()
 }
 
 // SUBSCRIBE channel [channel ...]
 // Listen for messages published to the given channels
-func (p *PubSub) Subscribe(channel interface{}, channels ...interface{}) ([]Message, error) {
-	return nil, nil
+func (p *PubSub) Subscribe(channel interface{}, channels ...interface{}) error {
+	p.cn.Pipe("SUBSCRIBE", channel)
+	p.cn.Pipe("SUBSCRIBE", channels...)
+	return p.cn.Flush()
 }
 
 // UNSUBSCRIBE [channel [channel ...]]
 // Stop listening for messages posted to the given channels
-func (p *PubSub) Unsubscribe(channel interface{}, channels ...interface{}) ([]Message, error) {
-	return nil, nil
+func (p *PubSub) Unsubscribe(channel interface{}, channels ...interface{}) error {
+	p.cn.Pipe("UNSUBSCRIBE", channel)
+	p.cn.Pipe("UNSUBSCRIBE", channels...)
+	return p.cn.Flush()
+}
+
+func (p *PubSub) Receive() interface{} {
+	r, e := p.cn.Receive()
+	if e != nil {
+		return e
+	}
+	return r
+}
+
+func (p *PubSub) Ping() (string, error) {
+	v, err := p.cn.Send("PING")
+	s, _ := v.(string)
+	return s, err
+}
+
+func (p *PubSub) Close() error {
+	return p.cn.Close()
 }

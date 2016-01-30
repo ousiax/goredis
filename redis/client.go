@@ -37,7 +37,7 @@ func (cli *Client) Auth(password string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	v, e := parseString(rsp)
+	v, e := String(rsp)
 	return v, e
 }
 
@@ -49,7 +49,7 @@ func (cli *Client) Echo(message string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	v, e := parseString(rsp)
+	v, e := String(rsp)
 	return v, e
 }
 
@@ -61,7 +61,7 @@ func (cli *Client) Ping() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	v, e := parseString(rsp)
+	v, e := String(rsp)
 	return v, e
 }
 
@@ -73,7 +73,7 @@ func (cli *Client) Quit() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	v, e := parseString(rsp)
+	v, e := String(rsp)
 	return v, e
 }
 
@@ -85,7 +85,7 @@ func (cli *Client) Select(index int) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	v, e := parseString(rsp)
+	v, e := String(rsp)
 	return v, e
 }
 
@@ -102,7 +102,7 @@ func (cli *Client) Del(key interface{}, keys ...interface{}) (int, error) {
 	if err != nil {
 		return -1, err
 	}
-	v, e := parseInt(rsp)
+	v, e := Int(rsp)
 	return v, e
 }
 
@@ -114,7 +114,7 @@ func (cli *Client) Dump(key interface{}) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	v, e := parseStringEx(rsp)
+	v, e := StringEx(rsp)
 	return v, e
 }
 
@@ -127,7 +127,7 @@ func (cli *Client) Exists(key interface{}, keys ...interface{}) (int, error) {
 	if err != nil {
 		return -1, err
 	}
-	v, e := parseInt(rsp)
+	v, e := Int(rsp)
 	return v, e
 }
 
@@ -141,7 +141,7 @@ func (cli *Client) Expire(key interface{}, seconds int) (int, error) {
 	if err != nil {
 		return -1, err
 	}
-	v, e := parseInt(rsp)
+	v, e := Int(rsp)
 	return v, e
 }
 
@@ -155,7 +155,7 @@ func (cli *Client) ExpireAt(key interface{}, timestamp int) (int, error) {
 	if err != nil {
 		return -1, err
 	}
-	v, e := parseInt(rsp)
+	v, e := Int(rsp)
 	return v, e
 }
 
@@ -167,7 +167,7 @@ func (cli *Client) Keys(pattern interface{}) ([]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	v, e := parseStrings(rsp)
+	v, e := Strings(rsp)
 	return v, e
 }
 
@@ -185,7 +185,7 @@ func (cli *Client) Move(key interface{}, db int) (int, error) {
 	if err != nil {
 		return -1, err
 	}
-	v, e := parseInt(rsp)
+	v, e := Int(rsp)
 	return v, e
 }
 
@@ -218,7 +218,7 @@ func (cli *Client) Persist(key interface{}) (int, error) {
 	if err != nil {
 		return -1, err
 	}
-	v, e := parseInt(rsp)
+	v, e := Int(rsp)
 	return v, e
 }
 
@@ -232,7 +232,7 @@ func (cli *Client) PExpire(key string, milliseconds int) (int, error) {
 	if err != nil {
 		return -1, err
 	}
-	v, e := parseInt(rsp)
+	v, e := Int(rsp)
 	return v, e
 }
 
@@ -246,7 +246,7 @@ func (cli *Client) PExpireAt(key string, millisecondTimestamp int) (int, error) 
 	if err != nil {
 		return -1, err
 	}
-	v, e := parseInt(rsp)
+	v, e := Int(rsp)
 	return v, e
 }
 
@@ -258,7 +258,7 @@ func (cli *Client) Pttl(key string) (int, error) {
 	if err != nil {
 		return -1, err
 	}
-	v, e := parseInt(rsp)
+	v, e := Int(rsp)
 	return v, e
 }
 
@@ -270,7 +270,7 @@ func (cli *Client) RandomKey() (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	v, e := parseStringEx(rsp)
+	v, e := StringEx(rsp)
 	return v, e
 }
 
@@ -282,7 +282,7 @@ func (cli *Client) Rename(key, newkey string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	v, e := parseString(rsp)
+	v, e := String(rsp)
 	return v, e
 }
 
@@ -296,7 +296,7 @@ func (cli *Client) RenameNx(key, newkey string) (int, error) {
 	if err != nil {
 		return -1, err
 	}
-	v, e := parseInt(rsp)
+	v, e := Int(rsp)
 	return v, e
 }
 
@@ -314,7 +314,7 @@ func (cli *Client) Restore(key interface{}, ttl int, serializedValue interface{}
 	if err != nil {
 		return "", err
 	}
-	v, e := parseString(rsp)
+	v, e := String(rsp)
 	return v, e
 }
 
@@ -333,7 +333,7 @@ func (cli *Client) Ttl(key interface{}) (int, error) {
 	if err != nil {
 		return -1, err
 	}
-	v, e := parseInt(rsp)
+	v, e := Int(rsp)
 	return v, e
 }
 
@@ -345,7 +345,7 @@ func (cli *Client) Type(key interface{}) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	v, e := parseString(rsp)
+	v, e := String(rsp)
 	return v, e
 }
 
@@ -357,7 +357,7 @@ func (cli *Client) Wait(numslaves, timeout int) (int, error) {
 	if err != nil {
 		return -1, err
 	}
-	v, e := parseInt(rsp)
+	v, e := Int(rsp)
 	return v, e
 }
 
@@ -399,7 +399,7 @@ func (cli *Client) Publish(channel, message interface{}) (int, error) {
 	if err != nil {
 		return -1, err
 	}
-	v, e := parseInt(rsp)
+	v, e := Int(rsp)
 	return v, e
 }
 
@@ -433,7 +433,7 @@ func (cli *Client) Append(key, value interface{}) (int, error) {
 	if err != nil {
 		return -1, err
 	}
-	v, e := parseInt(rsp)
+	v, e := Int(rsp)
 	return v, e
 }
 
@@ -447,7 +447,7 @@ func (cli *Client) BitCount(key interface{}, p ...int) (int, error) {
 	if err != nil {
 		return -1, err
 	}
-	v, e := parseInt(rsp)
+	v, e := Int(rsp)
 	return v, e
 }
 
@@ -461,7 +461,7 @@ func (cli *Client) BitOp(operation, destkey, key interface{}, keys ...interface{
 	if err != nil {
 		return -1, err
 	}
-	v, e := parseInt(rsp)
+	v, e := Int(rsp)
 	return v, e
 }
 
@@ -479,7 +479,7 @@ func (cli *Client) BitPOs(key interface{}, bit int, p ...int) (int, error) {
 	if err != nil {
 		return -1, err
 	}
-	v, e := parseInt(rsp)
+	v, e := Int(rsp)
 	return v, e
 }
 
@@ -498,7 +498,7 @@ func (cli *Client) DecrBy(key interface{}, decrement int) (int, error) {
 	if err != nil {
 		return -1, err
 	}
-	v, e := parseInt(rsp)
+	v, e := Int(rsp)
 	return v, e
 }
 
@@ -510,7 +510,7 @@ func (cli *Client) Get(key interface{}) (value interface{}, err error) {
 	if err != nil {
 		return nil, err
 	}
-	v, e := parseStringEx(rsp)
+	v, e := StringEx(rsp)
 	return v, e
 }
 
@@ -522,7 +522,7 @@ func (cli *Client) GetBit(key interface{}, offset int) (int, error) {
 	if err != nil {
 		return -1, err
 	}
-	v, e := parseInt(rsp)
+	v, e := Int(rsp)
 	return v, e
 }
 
@@ -534,7 +534,7 @@ func (cli *Client) GetRange(key interface{}, start, end int) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	v, e := parseString(rsp)
+	v, e := String(rsp)
 	return v, e
 }
 
@@ -546,7 +546,7 @@ func (cli *Client) GetSet(key, value interface{}) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	v, e := parseStringEx(rsp)
+	v, e := StringEx(rsp)
 	return v, e
 }
 
@@ -565,7 +565,7 @@ func (cli *Client) IncrBy(key interface{}, decrement int) (int, error) {
 	if err != nil {
 		return -1, err
 	}
-	v, e := parseInt(rsp)
+	v, e := Int(rsp)
 	return v, e
 }
 
@@ -577,7 +577,7 @@ func (cli *Client) IncrByFloat(key interface{}, decrement float64) (float64, err
 	if err != nil {
 		return -1.0, err
 	}
-	v, e := parseFloat(rsp)
+	v, e := Float64(rsp)
 	return v, e
 }
 
@@ -607,7 +607,7 @@ func (cli *Client) MSet(key, value interface{}, p ...interface{}) (string, error
 	if err != nil {
 		return "", err
 	}
-	v, e := parseString(rsp)
+	v, e := String(rsp)
 	return v, e
 }
 
@@ -622,7 +622,7 @@ func (cli *Client) MSetNx(key, value interface{}, p ...interface{}) (int, error)
 	if err != nil {
 		return 0, err
 	}
-	v, e := parseInt(rsp)
+	v, e := Int(rsp)
 	return v, e
 }
 
@@ -637,7 +637,7 @@ func (cli *Client) PSetEx(key interface{}, milliseconds int, value interface{}) 
 	if err != nil {
 		return "", err
 	}
-	v, e := parseString(rsp)
+	v, e := String(rsp)
 	return v, e
 }
 
@@ -656,7 +656,7 @@ func (cli *Client) Set(key, value interface{}, p ...interface{}) (string, error)
 	if e != nil {
 		return "", e
 	}
-	v, e := parseString(rsp)
+	v, e := String(rsp)
 	return v, e
 }
 
@@ -668,7 +668,7 @@ func (cli *Client) SetBit(key interface{}, offset, value int) (int, error) {
 	if err != nil {
 		return -1, err
 	}
-	v, e := parseInt(rsp)
+	v, e := Int(rsp)
 	return v, e
 }
 
@@ -683,7 +683,7 @@ func (cli *Client) SetEx(key interface{}, seconds int, value interface{}) (strin
 	if err != nil {
 		return "", err
 	}
-	v, e := parseString(rsp)
+	v, e := String(rsp)
 	return v, e
 }
 
@@ -697,7 +697,7 @@ func (cli *Client) SetNx(key, value interface{}) (int, error) {
 	if err != nil {
 		return -1, err
 	}
-	v, e := parseInt(rsp)
+	v, e := Int(rsp)
 	return v, e
 }
 
@@ -709,7 +709,7 @@ func (cli *Client) SetRange(key interface{}, offset int, value interface{}) (int
 	if err != nil {
 		return -1, err
 	}
-	v, e := parseInt(rsp)
+	v, e := Int(rsp)
 	return v, e
 }
 
@@ -721,7 +721,7 @@ func (cli *Client) StrLen(key interface{}) (int, error) {
 	if err != nil {
 		return -1, err
 	}
-	v, e := parseInt(rsp)
+	v, e := Int(rsp)
 	return v, e
 }
 
