@@ -4,6 +4,12 @@
 
 package redis
 
+import (
+	"errors"
+	"fmt"
+	"strings"
+)
+
 type PubSub struct {
 	cn Conn
 }
@@ -14,45 +20,39 @@ func NewPubSub(url string) (PubSub, error) {
 	return cli, err
 }
 
-type Kind int
-
-const (
-	SUBSCRIBE Kind = iota
-	UNSUBSCRIBE
-	PSUBSCRIBE
-	PUNSUBSCRIBE
-)
-
-var kinds = []string{
-	"SUBSCRIBE",
-	"UNSUBSCRIBE",
-	"PSUBSCRIBE",
-	"PUNSUBSCRIBE",
+type SubMessage struct {
+	Kind    string
+	Channel string
+	Num     int
 }
 
-func (k Kind) String() string {
-	return kinds[k]
-}
-
-type Subscription struct {
+func (sm SubMessage) String() string {
+	return fmt.Sprintf("%s\n%s\n%d\n", sm.Kind, sm.Channel, sm.Num)
 }
 
 type Message struct {
-	Channel interface{}
-	Text    interface{}
+	Channel string
+	Text    string
+}
+
+func (m Message) String() string {
+	return fmt.Sprintf("%s\n%s\n%s\n", "MESSAGE", m.Channel, m.Text)
 }
 
 type PMessage struct {
-	Pattern interface{}
-	Channel interface{}
-	Text    interface{}
+	Pattern string
+	Channel string
+	Text    string
+}
+
+func (p PMessage) String() string {
+	return fmt.Sprintf("%s\n%v\n%s\n%s\n", "PMESSAGE", p.Pattern, p.Channel, p.Text)
 }
 
 // PSUBSCRIBE pattern [pattern ...]
 // Listen for messages published to channels matching the given patterns
-func (p *PubSub) PSubscribe(pattern interface{}, patterns ...interface{}) error {
-	p.cn.Pipe("PSUBSCRIBE", pattern)
-	p.cn.Pipe("PSUBSCRIBE", patterns...)
+func (p *PubSub) PSubscribe(pattern string, patterns ...interface{}) error {
+	p.cn.Pipe("SUBSCRIBE", MakeSlice(patterns, pattern)...)
 	return p.cn.Flush()
 }
 
@@ -79,38 +79,57 @@ func (p *PubSub) PSubscribe(pattern interface{}, patterns ...interface{}) error 
 // PUBLISH channel message
 // Post a message to a channel
 // Integer reply: the number of clients that received the message.
-func (p *PubSub) Publish(channel, message interface{}) (int, error) {
-	return 0, nil
+func (p *PubSub) Publish(channel, message string) (int, error) {
+	r, e := p.cn.Send("PUBLISH", channel, message)
+	v, _ := Int(r)
+	return v, e
 }
 
 // PUNSUBSCRIBE [pattern [pattern ...]]
 // Stop listening for messages posted to channels matching the given patterns
-func (p *PubSub) PUnsubscribe(pattern interface{}, patterns ...interface{}) error {
-	p.cn.Pipe("PUNSUBSCRIBE", pattern)
-	p.cn.Pipe("PUNSUBSCRIBE", patterns...)
+func (p *PubSub) PUnsubscribe(pattern string, patterns ...interface{}) error {
+	p.cn.Pipe("SUBSCRIBE", MakeSlice(patterns, pattern)...)
 	return p.cn.Flush()
 }
 
 // SUBSCRIBE channel [channel ...]
 // Listen for messages published to the given channels
-func (p *PubSub) Subscribe(channel interface{}, channels ...interface{}) error {
-	p.cn.Pipe("SUBSCRIBE", channel)
-	p.cn.Pipe("SUBSCRIBE", channels...)
+func (p *PubSub) Subscribe(channel string, channels ...interface{}) error {
+	p.cn.Pipe("SUBSCRIBE", MakeSlice(channels, channel)...)
 	return p.cn.Flush()
 }
 
 // UNSUBSCRIBE [channel [channel ...]]
 // Stop listening for messages posted to the given channels
-func (p *PubSub) Unsubscribe(channel interface{}, channels ...interface{}) error {
-	p.cn.Pipe("UNSUBSCRIBE", channel)
-	p.cn.Pipe("UNSUBSCRIBE", channels...)
+func (p *PubSub) Unsubscribe(channel string, channels ...interface{}) error {
+	p.cn.Pipe("SUBSCRIBE", MakeSlice(channels, channel)...)
 	return p.cn.Flush()
 }
 
 func (p *PubSub) Receive() interface{} {
-	r, e := p.cn.Receive()
-	if e != nil {
-		return e
+	r, err := p.cn.Receive()
+	if err != nil {
+		return err
+	}
+	if v, err := r.([]interface{}); err {
+		s, _ := String(v[0])
+		switch k := strings.ToUpper(s); k {
+		case "MESSAGE":
+			c, _ := String(v[1])
+			t, _ := String(v[2])
+			return Message{Channel: c, Text: t}
+		case "PMESSAGE":
+			p, _ := String(v[1])
+			c, _ := String(v[2])
+			t, _ := String(v[3])
+			return PMessage{Pattern: p, Channel: c, Text: t}
+		case "SUBSCRIBE", "UNSUBSCRIBE", "PSUBSCRIBE", "PUNSUBSCRIBE":
+			c, _ := String(v[1])
+			n, _ := Int(v[2])
+			return SubMessage{Kind: k, Channel: c, Num: n}
+		default:
+			return errors.New(fmt.Sprintf("pubsub.Receive: Protocol error. (%v)", v))
+		}
 	}
 	return r
 }

@@ -13,6 +13,7 @@ import (
 	"net"
 	"net/url"
 	"strconv"
+	"time"
 )
 
 type Conn interface {
@@ -24,9 +25,10 @@ type Conn interface {
 }
 
 type conn struct {
-	cn net.Conn
-	bw *bufio.Writer
-	br *bufio.Reader
+	cn      net.Conn
+	bw      *bufio.Writer
+	br      *bufio.Reader
+	timeout time.Duration
 }
 
 func Dial(urlstring string) (Conn, error) {
@@ -36,13 +38,13 @@ func Dial(urlstring string) (Conn, error) {
 	}
 	network := u.Scheme
 	address := u.Host
-	cn, err := net.Dial(network, address)
+	cn, err := net.DialTimeout(network, address, time.Second*10)
 	if err != nil {
 		return nil, err
 	}
 	w := bufio.NewWriter(cn)
 	r := bufio.NewReader(cn)
-	cli := &conn{cn: cn, bw: w, br: r}
+	cli := &conn{cn: cn, bw: w, br: r, timeout: time.Second * 10}
 	return cli, nil
 }
 
@@ -82,6 +84,7 @@ func (c *conn) Flush() error {
 //    For Null Bulk String
 //    For Null Array
 func (c *conn) Receive() (reply interface{}, err error) {
+	c.cn.SetWriteDeadline(time.Now().Add(c.timeout))
 	line, err := c.br.ReadSlice('\n')
 	if err != nil {
 		return nil, err
@@ -133,16 +136,10 @@ func (c *conn) executeCommand(cmd string, args ...interface{}) (err error) {
 	return
 }
 
-func constructParameters(opt []interface{}, p ...interface{}) []interface{} {
-	l := len(opt) + len(p)
-	a := make([]interface{}, 0, l)
-	for _, v := range p {
-		a = append(a, v)
-	}
-	for _, v := range opt {
-		a = append(a, v)
-	}
-	return a
+func (c *conn) write(p []byte) (err error) {
+	c.cn.SetWriteDeadline(time.Now().Add(c.timeout))
+	_, err = c.bw.Write(p)
+	return
 }
 
 func (c *conn) writeCRLF() error {
@@ -155,7 +152,7 @@ func (c *conn) writeHeader(symbol byte, n int64) error {
 	c.bw.WriteByte(symbol)
 	// err = c.writeInt(n) // bugged, recursive calling.
 	p := strconv.AppendInt([]byte{}, n, 10)
-	c.bw.Write(p)
+	c.write(p)
 	err := c.writeCRLF()
 	return err
 }
@@ -163,7 +160,7 @@ func (c *conn) writeHeader(symbol byte, n int64) error {
 // writeBytes writes a []byte to buffer with RESP header($) and appends with CR&LF. e.g. $3\r\nSET\r\n
 func (c *conn) writeBytes(p []byte) error {
 	c.writeHeader('$', int64(len(p)))
-	c.bw.Write(p)
+	c.write(p)
 	err := c.writeCRLF()
 	return err
 }

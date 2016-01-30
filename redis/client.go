@@ -97,7 +97,7 @@ func (cli *Client) Select(index int) (string, error) {
 // Delete a key
 // Integer reply: The number of keys that were removed.
 func (cli *Client) Del(key interface{}, keys ...interface{}) (int, error) {
-	p := constructParameters(keys, key)
+	p := MakeSlice(keys, key)
 	rsp, err := cli.Send("DEL", p...)
 	if err != nil {
 		return -1, err
@@ -122,7 +122,7 @@ func (cli *Client) Dump(key interface{}) (interface{}, error) {
 // Determine if a key exists
 // Integer reply: The number of keys existing among the ones specified as arguments.
 func (cli *Client) Exists(key interface{}, keys ...interface{}) (int, error) {
-	p := constructParameters(keys, key)
+	p := MakeSlice(keys, key)
 	rsp, err := cli.Send("EXISTS", p...)
 	if err != nil {
 		return -1, err
@@ -456,7 +456,7 @@ func (cli *Client) BitCount(key interface{}, p ...int) (int, error) {
 // The BITOP command supports four bitwise operations: AND, OR, XOR and NOT.
 // Integer reply: The size of the string stored in the destination key, that is equal to the size of the longest input string.
 func (cli *Client) BitOp(operation, destkey, key interface{}, keys ...interface{}) (int, error) {
-	args := constructParameters(keys, operation, destkey, key)
+	args := MakeSlice(keys, operation, destkey, key)
 	rsp, err := cli.Send("BITOP", args...)
 	if err != nil {
 		return -1, err
@@ -585,7 +585,7 @@ func (cli *Client) IncrByFloat(key interface{}, decrement float64) (float64, err
 // Get the values of all the given keys
 // Array reply: list of values at the specified keys.
 func (cli *Client) MGet(key interface{}, keys ...interface{}) ([]interface{}, error) {
-	args := constructParameters(keys, key)
+	args := MakeSlice(keys, key)
 	rsp, err := cli.Send("MGET", args...)
 	if err != nil {
 		return nil, err
@@ -602,7 +602,7 @@ func (cli *Client) MGet(key interface{}, keys ...interface{}) ([]interface{}, er
 // Set multiple keys to multiple values
 // Simple string reply: always OK since MSET can't fail.
 func (cli *Client) MSet(key, value interface{}, p ...interface{}) (string, error) {
-	args := constructParameters(p, key, value)
+	args := MakeSlice(p, key, value)
 	rsp, err := cli.Send("MSET", args...)
 	if err != nil {
 		return "", err
@@ -617,7 +617,7 @@ func (cli *Client) MSet(key, value interface{}, p ...interface{}) (string, error
 //    1 if the all the keys were set.
 //    0 if no key was set (at least one key already existed).
 func (cli *Client) MSetNx(key, value interface{}, p ...interface{}) (int, error) {
-	args := constructParameters(p, key, value)
+	args := MakeSlice(p, key, value)
 	rsp, err := cli.Send("MSETNX", args...)
 	if err != nil {
 		return 0, err

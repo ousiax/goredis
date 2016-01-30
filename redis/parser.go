@@ -10,6 +10,7 @@ import (
 	"strconv"
 )
 
+// Int parses a RESP Integer to int.
 func Int(p interface{}) (int, error) {
 	v, e := p.(int)
 	if e {
@@ -42,7 +43,7 @@ func StringEx(p interface{}) (interface{}, error) {
 	}
 }
 
-// String parses a string if p is a string type, otherwise a empty string.
+// String parses RESP Bulk String or Simple String to a string, otherwise a empty string.
 // usually, the p is a string or a nil (i.e. a zero value).
 func String(p interface{}) (string, error) {
 	rsp, err := StringEx(p)

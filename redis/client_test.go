@@ -5,7 +5,6 @@
 package redis_test
 
 import (
-	"flag"
 	"github.com/qqbuby/goredis/redis"
 	"os"
 	"testing"
@@ -13,13 +12,7 @@ import (
 
 var client redis.Client
 
-const (
-	url = "tcp://127.0.0.1:6379"
-	// url = "tcp://192.168.128.134:6379"
-)
-
 func setup() error {
-	flag.Parse()
 	var err error
 	client, err = redis.NewClient(url)
 	return err
