@@ -82,7 +82,9 @@ func (c *conn) Flush() error {
 //    For Null Bulk String
 //    For Null Array
 func (c *conn) Receive() (reply interface{}, err error) {
-	p, m, e := c.response()
+	c.cn.SetReadDeadline(time.Now().Add(c.timeout))
+	b, e := c.br.ReadSlice('\n')
+	p, m := b[0], b[1:len(b)-2] //[+-:*],[message],[\r\n]
 	if e != nil {
 		return nil, e
 	}
@@ -120,17 +122,6 @@ func (c *conn) Receive() (reply interface{}, err error) {
 	default:
 		panic(fmt.Sprintf("Protocol Error: %s. [+-:*]", string(p)))
 	}
-}
-
-// response parses a RESP reply to [prefix],[payloadmessage],[\r\n].
-func (c *conn) response() (prefix byte, message []byte, err error) {
-	c.cn.SetReadDeadline(time.Now().Add(c.timeout))
-	b, e := c.br.ReadSlice('\n')
-	if e != nil {
-		return '\000', []byte{}, e
-	}
-	p, m := b[0], b[1:len(b)-2]
-	return p, m, nil
 }
 
 func (c *conn) execute(cmd string, args ...interface{}) (err error) {
