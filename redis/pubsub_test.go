@@ -25,7 +25,7 @@ func TestPubSub(t *testing.T) {
 
 	sc.Subscribe("c1")
 	r := sc.Receive()
-	if !reflect.DeepEqual(r, redis.SubMessage{Kind: "SUBSCRIBE", Channel: "c1", Num: 1}) {
+	if !reflect.DeepEqual(r, redis.PubSubMessage{Kind: "SUBSCRIBE", Channel: "c1", Num: 1}) {
 		t.Fatal("TestPubSub failure.")
 	}
 	pc.Publish("c1", "Hi")
