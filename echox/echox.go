@@ -19,7 +19,7 @@ const (
 	network = "tcp"
 	host    = "127.0.0.1"
 	port    = 2433
-	timeout = 30
+	timeout = time.Second * 60
 )
 
 func main() {
@@ -47,7 +47,7 @@ func main() {
 			r := bufio.NewReader(cn)
 			w := bufio.NewWriter(cn)
 			for {
-				cn.SetReadDeadline(time.Now().Add(time.Second * timeout))
+				cn.SetReadDeadline(time.Now().Add(timeout))
 				s, e := r.ReadString('\n')
 				if e != nil {
 					log.Printf("Disconnected:%s, Error:%s", cn.RemoteAddr(), e)
@@ -59,7 +59,7 @@ func main() {
 				} else if cmd == "shutdown" {
 					l.Close()
 				}
-				cn.SetWriteDeadline(time.Now().Add(time.Second * timeout))
+				cn.SetWriteDeadline(time.Now().Add(timeout))
 				w.WriteString(s)
 				if w.Flush() != nil {
 					break
