@@ -53,6 +53,7 @@ func main() {
 					log.Printf("Disconnected:%s, Error:%s", cn.RemoteAddr(), e)
 					break
 				}
+				log.Printf("%s:%q", cn.RemoteAddr(), s)
 				if cmd := strings.ToLower(strings.TrimSpace(s)); cmd == "quit" {
 					break
 				} else if cmd == "shutdown" {

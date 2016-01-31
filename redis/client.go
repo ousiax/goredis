@@ -114,7 +114,7 @@ func (cli *Client) Dump(key interface{}) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	v, e := StringEx(rsp)
+	v, e := Stringx(rsp)
 	return v, e
 }
 
@@ -270,7 +270,7 @@ func (cli *Client) RandomKey() (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	v, e := StringEx(rsp)
+	v, e := Stringx(rsp)
 	return v, e
 }
 
@@ -510,7 +510,7 @@ func (cli *Client) Get(key interface{}) (value interface{}, err error) {
 	if err != nil {
 		return nil, err
 	}
-	v, e := StringEx(rsp)
+	v, e := Stringx(rsp)
 	return v, e
 }
 
@@ -546,7 +546,7 @@ func (cli *Client) GetSet(key, value interface{}) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	v, e := StringEx(rsp)
+	v, e := Stringx(rsp)
 	return v, e
 }
 

@@ -16,8 +16,6 @@ import (
 
 func print(p interface{}) {
 	switch v := p.(type) {
-	case string, int:
-		fmt.Println(v)
 	case []byte:
 		fmt.Println(string(v))
 	case []interface{}:
