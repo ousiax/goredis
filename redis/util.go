@@ -6,6 +6,10 @@ package redis
 
 // MakeSlice make a new slice: [ p[0],p[1],...,p[n],opt[0],opt[1],...,opt[n] ]
 func MakeSlice(opt []interface{}, p ...interface{}) []interface{} {
+	if len(opt) == 0 {
+		return p
+	}
+
 	l := len(opt) + len(p)
 	a := make([]interface{}, 0, l)
 	for _, v := range p {
