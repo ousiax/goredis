@@ -26,7 +26,7 @@ func main() {
 	hPtr := flag.String("host", host, fmt.Sprintf("Echo Server host. (Default: %s", host))
 	pPtr := flag.Int("port", port, fmt.Sprintf("Server port (default: %d).", port))
 	flag.Parse()
-	l, err := net.Listen("tcp", *hPtr+":"+strconv.Itoa(*pPtr))
+	l, err := net.Listen(network, *hPtr+":"+strconv.Itoa(*pPtr))
 	if err != nil {
 		log.Fatal(err)
 	}
